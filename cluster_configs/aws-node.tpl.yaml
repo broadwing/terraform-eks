@@ -1,0 +1,106 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  annotations:
+  labels:
+    k8s-app: aws-node
+  name: aws-node
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      k8s-app: aws-node
+  template:
+    metadata:
+      labels:
+        k8s-app: aws-node
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: beta.kubernetes.io/os
+                operator: In
+                values:
+                - linux
+              - key: beta.kubernetes.io/arch
+                operator: In
+                values:
+                - amd64
+      containers:
+      - env:
+        - name: AWS_VPC_K8S_CNI_LOGLEVEL
+          value: DEBUG
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: WATCH_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        # Can use this once v1.6.0 comes out
+        # - name: AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS
+        #   value: "192.168.0.0/16"
+        - name: AWS_VPC_K8S_CNI_EXTERNALSNAT
+          value: "${externalsnat}"
+
+        image: 602401143452.dkr.ecr.us-east-1.amazonaws.com/amazon-k8s-cni:v1.5.0
+        imagePullPolicy: Always
+        name: aws-node
+        ports:
+        - containerPort: 61678
+          hostPort: 61678
+          name: metrics
+          protocol: TCP
+        resources:
+          requests:
+            cpu: 10m
+        securityContext:
+          privileged: true
+          procMount: Default
+        volumeMounts:
+        - mountPath: /host/opt/cni/bin
+          name: cni-bin-dir
+        - mountPath: /host/etc/cni/net.d
+          name: cni-net-dir
+        - mountPath: /host/var/log
+          name: log-dir
+        - mountPath: /var/run/docker.sock
+          name: dockersock
+      dnsPolicy: ClusterFirst
+      hostNetwork: true
+      priorityClassName: system-cluster-critical
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: aws-node
+      serviceAccountName: aws-node
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - operator: Exists
+      volumes:
+      - hostPath:
+          path: /opt/cni/bin
+          type: ""
+        name: cni-bin-dir
+      - hostPath:
+          path: /etc/cni/net.d
+          type: ""
+        name: cni-net-dir
+      - hostPath:
+          path: /var/log
+          type: ""
+        name: log-dir
+      - hostPath:
+          path: /var/run/docker.sock
+          type: ""
+        name: dockersock
+  templateGeneration: 1
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

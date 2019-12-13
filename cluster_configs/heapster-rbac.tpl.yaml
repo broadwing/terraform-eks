@@ -1,0 +1,46 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: heapster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:heapster
+subjects:
+- kind: ServiceAccount
+  name: heapster
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1beta1
+# kubernetes versions before 1.8.0 should use rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: system:heapster
+rules:
+  - verbs:
+      - get
+      - list
+      - watch
+      - create
+    apiGroups:
+      - ''
+    resources:
+      - nodes/stats
+  - verbs:
+      - list
+      - watch
+    apiGroups:
+      - ''
+    resources:
+      - configmaps
+      - secrets
+      - nodes
+      - pods
+      - services
+      - resourcequotas
+      - replicationcontrollers
+      - limitranges
+      - persistentvolumeclaims
+      - persistentvolumes
+      - namespaces
+      - endpoints
