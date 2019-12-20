@@ -9,7 +9,7 @@ module "provision_auth_config" {
   )
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
     calico_cni   = module.provision_calico.md5
     worker_role_arn = join(
       "",

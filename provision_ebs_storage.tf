@@ -5,10 +5,10 @@ module "provision_ebs" {
 
   template = file("${path.module}/cluster_configs/ebs-storage-class.tpl.yaml")
 
-  extra_command = "kubectl --namespace kube-system delete storageclasses.storage.k8s.io gp2"
+  extra_command = "--namespace kube-system delete storageclasses.storage.k8s.io gp2"
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
     encrypted    = var.ebs_default_encrypted
   }
 }

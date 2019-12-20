@@ -7,13 +7,9 @@ variable "kubeconfig" {
   description = "The location of the kubeconfig to use"
 }
 
-variable "kubectl_bin" {
-  description = "Binary location of kubectl. If not set then embedded kubectl bin is used."
-  default     = "kubectl"
-}
-
 variable "template" {
   description = "Template to use for manifest"
+  default     = null
 }
 
 variable "vars" {
@@ -23,5 +19,5 @@ variable "vars" {
 
 variable "extra_command" {
   description = "If set this will be run before the kubectl apply"
-  default     = ""
+  default     = null
 }

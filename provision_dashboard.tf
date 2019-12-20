@@ -10,7 +10,7 @@ module "provision_dashboard" {
   )
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
     cni          = var.remove_aws_vpc_cni ? "" : "aws"
   }
 }
@@ -24,7 +24,7 @@ module "provision_heapster" {
   template = file("${path.module}/cluster_configs/heapster.tpl.yaml")
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
     eks_endpoint = module.eks.cluster_endpoint
   }
 }
@@ -38,7 +38,7 @@ module "provision_influxdb" {
   template = file("${path.module}/cluster_configs/influxdb.tpl.yaml")
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
   }
 }
 
@@ -51,7 +51,7 @@ module "provision_heapster_rbac" {
   template = file("${path.module}/cluster_configs/heapster-rbac.tpl.yaml")
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
   }
 }
 
@@ -66,7 +66,7 @@ module "provision_admin_service_account" {
   )
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
   }
 }
 

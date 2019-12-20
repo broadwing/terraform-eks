@@ -1,33 +1,52 @@
 locals {
-  kubectl_bin = var.kubectl_bin == null ? abspath("${path.module}/bin/kubectl") : var.kubectl_bin
+  bin_path = abspath("${path.module}/bin")
 }
 
 data "template_file" "manifest" {
+  count = var.apply == "true" && var.template != null ? 1 : 0
   template = var.template
 
   vars = var.vars
 }
 
-resource "null_resource" "apply" {
-  count = var.apply == "true" ? 1 : 0
+resource "null_resource" "command" {
+  count = var.appy == "true" && var.extra_command != null ? 1 : 0
 
   triggers = {
-    template      = md5(data.template_file.manifest.rendered)
     extra_command = md5(var.extra_command)
   }
 
   provisioner "local-exec" {
-    command = <<EOT
-${var.extra_command}
-
-cat <<'EOF' | ${local.kubectl_bin} apply -f -
-${data.template_file.manifest.rendered}
-EOF
-EOT
-
+    command = <<-EOT
+    PATH=${local.bin_path}:$PATH
+    ${var.extra_command}
+    EOT
 
     environment = {
       KUBECONFIG = var.kubeconfig
     }
   }
+}
+
+resource "null_resource" "apply" {
+  count = var.apply == "true" && var.template != null ? 1 : 0
+
+  triggers = {
+    template      = md5(data.template_file.manifest.rendered)
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+PATH=${local.bin_path}:$PATH
+cat <<'EOF' | kubectl apply -f -
+${data.template_file.manifest.rendered}
+EOF
+EOT
+
+    environment = {
+      KUBECONFIG = var.kubeconfig
+    }
+  }
+
+  depends_on = [null_resource.command]
 }

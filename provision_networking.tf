@@ -8,7 +8,7 @@ module "provision_genie" {
   template = file("${path.module}/cluster_configs/genie.tpl.yaml")
 
   vars = {
-    wait_for_eks = null_resource.wait_for_eks.id
+    wait_for_eks = module.wait_for_eks.command_id
     default_plugins = var.calico_cni ? "calico" : ""
   }
 }
@@ -22,11 +22,11 @@ module "provision_calico" {
 
   template = file("${path.module}/cluster_configs/calico.tpl.yaml")
 
-  extra_command = var.remove_aws_vpc_cni ? "kubectl --namespace kube-system delete daemonsets aws-node" : ""
+  extra_command = var.remove_aws_vpc_cni ? "--namespace kube-system delete daemonsets aws-node" : ""
 
   vars = {
     wait_for_genie   = var.genie_cni ? module.provision_genie.md5 : ""
-    wait_for_eks     = null_resource.wait_for_eks.id
+    wait_for_eks     = module.wait_for_eks.command_id
     ip_autodetection = var.remove_aws_vpc_cni ? "first-found" : "interface=eth0"
   }
 }
@@ -42,7 +42,7 @@ module "provision_aws_cni" {
 
   vars = {
     wait_for_calico = var.calico_cni ? module.provision_calico.md5 : ""
-    wait_for_eks    = null_resource.wait_for_eks.id
+    wait_for_eks    = module.wait_for_eks.command_id
     externalsnat    = var.calico_cni ? "true" : "false"
   }
 }
@@ -58,7 +58,7 @@ module "provision_dns" {
 
   vars = {
     wait_for_genie  = var.genie_cni ? module.provision_genie.md5 : ""
-    wait_for_eks    = null_resource.wait_for_eks.id
+    wait_for_eks    = module.wait_for_eks.command_id
     cni             = var.remove_aws_vpc_cni ? "" : "aws"
   }
 }

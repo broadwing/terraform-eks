@@ -125,25 +125,14 @@ resource "local_file" "kubeconfig" {
   filename = "${path.root}/${var.name}.kubeconfig"
 }
 
-resource "null_resource" "wait_for_eks" {
-  depends_on = [local_file.kubeconfig]
+module "wait_for_eks" {
+  source     = "./modules/kubectl-apply"
+  kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
-  triggers = {
-    auth_config = md5(module.eks.kubeconfig)
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
+  extra_command = <<-EOT
     until kubectl version
     do
       echo "Waiting for cluster"
     done
-
-EOT
-
-
-    environment = {
-      KUBECONFIG = "${path.root}/${var.name}.kubeconfig"
-    }
-  }
+  EOT
 }
