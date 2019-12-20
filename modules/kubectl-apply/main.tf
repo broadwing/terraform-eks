@@ -1,5 +1,5 @@
 locals {
-  kubect_bin = var.kubectl_bin == null ? abspath("${path.module}/bin/kubectl") : var.kubectl_bin
+  kubectl_bin = var.kubectl_bin == null ? abspath("${path.module}/bin/kubectl") : var.kubectl_bin
 }
 
 data "template_file" "manifest" {
