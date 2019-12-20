@@ -44,6 +44,11 @@ variable "dashboard" {
   default     = "true"
 }
 
+variable "get_dashboard_token" {
+  description = "If dashboard token should be retrieved"
+  default     = "true"
+}
+
 variable "alb_ingress_controller" {
   description = "If alb ingress controller should be installed"
   default     = "true"

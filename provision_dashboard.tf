@@ -71,7 +71,7 @@ module "provision_admin_service_account" {
 }
 
 data "external" "dashboard-token" {
-  count = var.dashboard == "true" ? 1 : 0
+  count = var.get_dashboard_token == "true" ? 1 : 0
 
   program = ["${path.module}/bin/get_dashboard_token.sh"]
 
