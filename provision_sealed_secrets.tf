@@ -1,6 +1,6 @@
 # Seaeled Secrets
 module "provision_sealed_secrets_controller" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.sealed_secrets_controller
@@ -15,7 +15,7 @@ module "provision_sealed_secrets_controller" {
 }
 
 module "provision_sealed_secrets_crd" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.sealed_secrets_controller
@@ -26,4 +26,3 @@ module "provision_sealed_secrets_crd" {
     wait_for_eks = null_resource.wait_for_eks.id
   }
 }
-

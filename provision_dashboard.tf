@@ -1,6 +1,6 @@
 # Dashboard
 module "provision_dashboard" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.dashboard
@@ -16,7 +16,7 @@ module "provision_dashboard" {
 }
 
 module "provision_heapster" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.dashboard
@@ -30,7 +30,7 @@ module "provision_heapster" {
 }
 
 module "provision_influxdb" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.dashboard
@@ -43,7 +43,7 @@ module "provision_influxdb" {
 }
 
 module "provision_heapster_rbac" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.dashboard
@@ -56,7 +56,7 @@ module "provision_heapster_rbac" {
 }
 
 module "provision_admin_service_account" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.dashboard
@@ -80,4 +80,3 @@ data "external" "dashboard-token" {
     wait_for_account = module.provision_admin_service_account.md5
   }
 }
-

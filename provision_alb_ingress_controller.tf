@@ -1,5 +1,5 @@
 module "provision_alb_ingress_controller_role" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.alb_ingress_controller
@@ -15,7 +15,7 @@ module "provision_alb_ingress_controller_role" {
 }
 
 module "provision_alb_ingress_controller" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.alb_ingress_controller
@@ -31,4 +31,3 @@ module "provision_alb_ingress_controller" {
     alb_image    = var.alb_ingress_controller_image
   }
 }
-

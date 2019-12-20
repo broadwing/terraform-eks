@@ -1,6 +1,6 @@
 # ebs-storage
 module "provision_ebs" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   template = file("${path.module}/cluster_configs/ebs-storage-class.tpl.yaml")
@@ -12,4 +12,3 @@ module "provision_ebs" {
     encrypted    = var.ebs_default_encrypted
   }
 }
-

@@ -1,5 +1,5 @@
 module "provision_external_dns" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.external_dns
@@ -14,4 +14,3 @@ module "provision_external_dns" {
     )}" : ""
   }
 }
-

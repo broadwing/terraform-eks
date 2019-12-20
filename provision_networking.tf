@@ -1,6 +1,6 @@
 # Genie
 module "provision_genie" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.genie_cni
@@ -15,7 +15,7 @@ module "provision_genie" {
 
 # Calico
 module "provision_calico" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.calico_cni
@@ -33,7 +33,7 @@ module "provision_calico" {
 
 # aws cni driver
 module "provision_aws_cni" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.remove_aws_vpc_cni ? "false" : "true"
@@ -49,7 +49,7 @@ module "provision_aws_cni" {
 
 # Set dns to run on aws cni so all containers in calico and aws have dns access
 module "provision_dns" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.genie_cni
@@ -62,4 +62,3 @@ module "provision_dns" {
     cni             = var.remove_aws_vpc_cni ? "" : "aws"
   }
 }
-

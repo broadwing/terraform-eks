@@ -1,5 +1,5 @@
 module "provision_metrics_server" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   apply = var.metrics_server
@@ -12,4 +12,3 @@ module "provision_metrics_server" {
     wait_for_eks = null_resource.wait_for_eks.id
   }
 }
-

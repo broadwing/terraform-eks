@@ -1,7 +1,7 @@
 # Auth
 # We'll provision auth ourselves so that worker nodes can't join until we are finished provisioing the cluster and networking
 module "provision_auth_config" {
-  source     = "../kubectl-apply"
+  source     = "./modules/kubectl-apply"
   kubeconfig = "${path.root}/${var.name}.kubeconfig"
 
   template = file(
@@ -82,4 +82,3 @@ data "template_file" "map_accounts" {
     account_number = element(var.map_accounts, count.index)
   }
 }
-
