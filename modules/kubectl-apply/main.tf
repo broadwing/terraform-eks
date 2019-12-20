@@ -32,14 +32,14 @@ resource "null_resource" "apply" {
   count = var.apply == "true" && var.template != null ? 1 : 0
 
   triggers = {
-    template      = md5(data.template_file.manifest.rendered)
+    template      = md5(data.template_file.manifest[0].rendered)
   }
 
   provisioner "local-exec" {
     command = <<EOT
 PATH=${local.bin_path}:$PATH
 cat <<'EOF' | kubectl apply -f -
-${data.template_file.manifest.rendered}
+${data.template_file.manifest[0].rendered}
 EOF
 EOT
 
