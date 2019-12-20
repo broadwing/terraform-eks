@@ -10,7 +10,7 @@ data "template_file" "manifest" {
 }
 
 resource "null_resource" "command" {
-  count = var.appy == "true" && var.extra_command != null ? 1 : 0
+  count = var.apply == "true" && var.extra_command != null ? 1 : 0
 
   triggers = {
     extra_command = md5(var.extra_command)
