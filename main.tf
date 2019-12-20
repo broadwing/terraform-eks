@@ -133,6 +133,7 @@ module "wait_for_eks" {
     until kubectl version
     do
       echo "Waiting for cluster"
+      sleep 10
     done
   EOT
 }
