@@ -22,7 +22,7 @@ module "provision_calico" {
 
   template = file("${path.module}/cluster_configs/calico.tpl.yaml")
 
-  extra_command = var.remove_aws_vpc_cni ? "--namespace kube-system delete daemonsets aws-node" : ""
+  extra_command = var.remove_aws_vpc_cni ? "kubectl --namespace kube-system delete daemonsets aws-node" : ""
 
   vars = {
     wait_for_genie   = var.genie_cni ? module.provision_genie.md5 : ""
