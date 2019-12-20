@@ -1,3 +1,7 @@
+locals {
+  kubect_bin = var.kubectl_bin == null ? abspath("${path.module}/bin/kubectl") : var.kubectl_bin
+}
+
 data "template_file" "manifest" {
   template = var.template
 
@@ -16,7 +20,7 @@ resource "null_resource" "apply" {
     command = <<EOT
 ${var.extra_command}
 
-cat <<'EOF' | ${var.kubectl_bin} apply -f -
+cat <<'EOF' | ${local.kubectl_bin} apply -f -
 ${data.template_file.manifest.rendered}
 EOF
 EOT
@@ -27,4 +31,3 @@ EOT
     }
   }
 }
-

@@ -8,7 +8,7 @@ variable "kubeconfig" {
 }
 
 variable "kubectl_bin" {
-  description = "Binary location of kubectl"
+  description = "Binary location of kubectl. If not set then embedded kubectl bin is used."
   default     = "kubectl"
 }
 
