@@ -1,7 +1,7 @@
 # Seaeled Secrets
 module "provision_sealed_secrets_controller" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.sealed_secrets_controller
 
@@ -16,7 +16,7 @@ module "provision_sealed_secrets_controller" {
 
 module "provision_sealed_secrets_crd" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.sealed_secrets_controller
 

@@ -2,7 +2,7 @@
 # We'll provision auth ourselves so that worker nodes can't join until we are finished provisioing the cluster and networking
 module "provision_auth_config" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   template = file(
     "${path.module}/cluster_configs/auth/config-map-aws-auth.yaml.tpl",

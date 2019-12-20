@@ -14,6 +14,7 @@ resource "null_resource" "command" {
 
   triggers = {
     extra_command = md5(var.extra_command)
+    vars          = md5(var.vars)
   }
 
   provisioner "local-exec" {

@@ -1,3 +1,7 @@
+locals {
+  kubeconfig_path = abspath(local_file.kubeconfig.filename)
+}
+
 data "aws_caller_identity" "current" {
 }
 
@@ -127,7 +131,7 @@ resource "local_file" "kubeconfig" {
 
 module "wait_for_eks" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = abspath(local_file.kubeconfig.filename)
 
   extra_command = <<-EOT
     until kubectl version

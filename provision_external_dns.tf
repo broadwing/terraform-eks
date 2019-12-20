@@ -1,6 +1,6 @@
 module "provision_external_dns" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.external_dns
 

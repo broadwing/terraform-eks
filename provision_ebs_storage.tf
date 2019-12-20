@@ -1,7 +1,7 @@
 # ebs-storage
 module "provision_ebs" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   template = file("${path.module}/cluster_configs/ebs-storage-class.tpl.yaml")
 

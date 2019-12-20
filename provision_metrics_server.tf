@@ -1,6 +1,6 @@
 module "provision_metrics_server" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.metrics_server
 

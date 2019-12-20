@@ -1,6 +1,6 @@
 module "provision_alb_ingress_controller_role" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.alb_ingress_controller
 
@@ -16,7 +16,7 @@ module "provision_alb_ingress_controller_role" {
 
 module "provision_alb_ingress_controller" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.alb_ingress_controller
 

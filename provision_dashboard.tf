@@ -1,7 +1,7 @@
 # Dashboard
 module "provision_dashboard" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.dashboard
 
@@ -17,7 +17,7 @@ module "provision_dashboard" {
 
 module "provision_heapster" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.dashboard
 
@@ -31,7 +31,7 @@ module "provision_heapster" {
 
 module "provision_influxdb" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.dashboard
 
@@ -44,7 +44,7 @@ module "provision_influxdb" {
 
 module "provision_heapster_rbac" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.dashboard
 
@@ -57,7 +57,7 @@ module "provision_heapster_rbac" {
 
 module "provision_admin_service_account" {
   source     = "./modules/kubectl-apply"
-  kubeconfig = "${path.root}/${var.name}.kubeconfig"
+  kubeconfig = local.kubeconfig_path
 
   apply = var.dashboard
 
@@ -76,7 +76,7 @@ data "external" "dashboard-token" {
   program = ["${path.module}/bin/get_dashboard_token.sh"]
 
   query = {
-    kubeconfig       = "${path.root}/${var.name}.kubeconfig"
+    kubeconfig       = local.kubeconfig_path
     wait_for_account = module.provision_admin_service_account.md5
   }
 }
