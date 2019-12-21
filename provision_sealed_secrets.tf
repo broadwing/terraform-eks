@@ -10,7 +10,9 @@ module "provision_sealed_secrets_controller" {
   )
 
   vars = {
+    cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
+
   module_depends_on = [module.wait_for_eks.command]
 }
 
