@@ -10,9 +10,10 @@ module "provision_dashboard" {
   )
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
     cni          = var.remove_aws_vpc_cni ? "" : "aws"
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_heapster" {
@@ -24,9 +25,10 @@ module "provision_heapster" {
   template = file("${path.module}/cluster_configs/heapster.tpl.yaml")
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
     eks_endpoint = module.eks.cluster_endpoint
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_influxdb" {
@@ -38,8 +40,9 @@ module "provision_influxdb" {
   template = file("${path.module}/cluster_configs/influxdb.tpl.yaml")
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_heapster_rbac" {
@@ -51,8 +54,9 @@ module "provision_heapster_rbac" {
   template = file("${path.module}/cluster_configs/heapster-rbac.tpl.yaml")
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_admin_service_account" {
@@ -66,8 +70,9 @@ module "provision_admin_service_account" {
   )
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 data "external" "dashboard-token" {
@@ -77,6 +82,6 @@ data "external" "dashboard-token" {
 
   query = {
     kubeconfig       = local.kubeconfig_path
-    wait_for_account = module.provision_admin_service_account.md5
+    wait_for_account = module.provision_admin_service_account.apply.id
   }
 }

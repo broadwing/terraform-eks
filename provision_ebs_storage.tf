@@ -8,7 +8,8 @@ module "provision_ebs" {
   extra_command = "kubectl --namespace kube-system delete storageclasses.storage.k8s.io gp2"
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
-    encrypted    = var.ebs_default_encrypted
+    encrypted = var.ebs_default_encrypted
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }

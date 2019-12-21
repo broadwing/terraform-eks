@@ -27,6 +27,8 @@ resource "null_resource" "command" {
       KUBECONFIG = var.kubeconfig
     }
   }
+
+  depends_on = [var.module_depends_on]
 }
 
 resource "null_resource" "apply" {
@@ -49,5 +51,5 @@ EOT
     }
   }
 
-  depends_on = [null_resource.command]
+  depends_on = [var.module_depends_on]
 }

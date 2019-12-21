@@ -9,8 +9,6 @@ module "provision_auth_config" {
   )
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
-    calico_cni   = module.provision_calico.md5
     worker_role_arn = join(
       "",
       data.template_file.launch_template_worker_role_arns.*.rendered,
@@ -19,6 +17,8 @@ module "provision_auth_config" {
     map_roles    = join("\n", data.template_file.map_roles.*.rendered)
     map_accounts = join("\n", data.template_file.map_accounts.*.rendered)
   }
+
+  module_depends_on = [module.provision_calico.apply, module.wait_for_eks.command]
 }
 
 # From Base EKS Module

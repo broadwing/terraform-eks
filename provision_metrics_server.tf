@@ -9,6 +9,7 @@ module "provision_metrics_server" {
   )
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+    module_depends_on = [module.wait_for_eks.command]
 }

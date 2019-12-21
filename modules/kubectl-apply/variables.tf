@@ -21,3 +21,9 @@ variable "extra_command" {
   description = "If set this will be run before the kubectl apply"
   default     = null
 }
+
+variable "module_depends_on" {
+  description = "List of module depends on resources"
+  type        = list
+  default     = []
+}

@@ -10,8 +10,9 @@ module "provision_alb_ingress_controller_role" {
 
   vars = {
     cluster_name = var.environment
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_alb_ingress_controller" {
@@ -26,8 +27,10 @@ module "provision_alb_ingress_controller" {
 
   vars = {
     cluster_name = var.environment
-    wait_for_eks = module.wait_for_eks.command_id
     alb_prefix   = var.alb_prefix
     alb_image    = var.alb_ingress_controller_image
   }
+
+  module_depends_on = [module.wait_for_eks.command]
+
 }

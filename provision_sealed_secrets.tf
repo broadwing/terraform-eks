@@ -10,8 +10,8 @@ module "provision_sealed_secrets_controller" {
   )
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 module "provision_sealed_secrets_crd" {
@@ -23,6 +23,7 @@ module "provision_sealed_secrets_crd" {
   template = file("${path.module}/cluster_configs/sealed-secrets-crd.tpl.yaml")
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
   }
+
+  module_depends_on = [module.wait_for_eks.command]
 }

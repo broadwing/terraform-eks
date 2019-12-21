@@ -8,9 +8,10 @@ module "provision_genie" {
   template = file("${path.module}/cluster_configs/genie.tpl.yaml")
 
   vars = {
-    wait_for_eks = module.wait_for_eks.command_id
     default_plugins = var.calico_cni ? "calico" : ""
   }
+
+    module_depends_on = [module.wait_for_eks.command]
 }
 
 # Calico
@@ -25,10 +26,10 @@ module "provision_calico" {
   extra_command = var.remove_aws_vpc_cni ? "kubectl --namespace kube-system delete daemonsets aws-node" : ""
 
   vars = {
-    wait_for_genie   = var.genie_cni ? module.provision_genie.md5 : ""
-    wait_for_eks     = module.wait_for_eks.command_id
     ip_autodetection = var.remove_aws_vpc_cni ? "first-found" : "interface=eth0"
   }
+
+  module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
 # aws cni driver
@@ -41,10 +42,10 @@ module "provision_aws_cni" {
   template = file("${path.module}/cluster_configs/aws-node.tpl.yaml")
 
   vars = {
-    wait_for_calico = var.calico_cni ? module.provision_calico.md5 : ""
-    wait_for_eks    = module.wait_for_eks.command_id
     externalsnat    = var.calico_cni ? "true" : "false"
   }
+
+  module_depends_on = var.calico_cni ? [module.provision_calico.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
 # Set dns to run on aws cni so all containers in calico and aws have dns access
@@ -57,8 +58,8 @@ module "provision_dns" {
   template = file("${path.module}/cluster_configs/dns.tpl.yaml")
 
   vars = {
-    wait_for_genie  = var.genie_cni ? module.provision_genie.md5 : ""
-    wait_for_eks    = module.wait_for_eks.command_id
     cni             = var.remove_aws_vpc_cni ? "" : "aws"
   }
+
+  module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
