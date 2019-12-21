@@ -3,7 +3,7 @@ locals {
 }
 
 data "template_file" "manifest" {
-  count = var.apply == "true" && var.template != null ? 1 : 0
+  count    = var.apply == "true" && var.template != null ? 1 : 0
   template = var.template
 
   vars = var.vars
@@ -14,7 +14,7 @@ resource "null_resource" "command" {
 
   triggers = {
     extra_command = md5(var.extra_command)
-    vars          = md5(var.vars)
+    template      = var.template != null ? md5(data.template_file.manifest[0].rendered) : ""
   }
 
   provisioner "local-exec" {
@@ -33,7 +33,7 @@ resource "null_resource" "apply" {
   count = var.apply == "true" && var.template != null ? 1 : 0
 
   triggers = {
-    template      = md5(data.template_file.manifest[0].rendered)
+    template = md5(data.template_file.manifest[0].rendered)
   }
 
   provisioner "local-exec" {
