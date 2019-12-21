@@ -125,8 +125,8 @@ module "eks" {
 }
 
 resource "local_file" "kubeconfig" {
-  content  = module.eks.kubeconfig
-  filename = abspath("${path.root}/${var.name}.kubeconfig")
+  content_base64 = base64encode(module.eks.kubeconfig)
+  filename       = abspath("${path.root}/${var.name}.kubeconfig")
 
   file_permission = "0644"
 }
