@@ -127,6 +127,8 @@ module "eks" {
 resource "local_file" "kubeconfig" {
   content  = module.eks.kubeconfig
   filename = "${path.root}/${var.name}.kubeconfig"
+
+  file_permission = "0644"
 }
 
 module "wait_for_eks" {
