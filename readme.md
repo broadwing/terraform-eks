@@ -8,6 +8,61 @@ Some variables and options that are available on the `terraform-aws-eks` module 
 
 If in the future additional features are need we can map variables from this module to the wrapped open source one.
 
+## Example Usage
+```hcl
+locals {
+  node_groups = [
+    {
+      name          = "base"
+      min_count     = 1
+      count         = 2
+      max_count     = 2
+      instance_type = "m5.xlarge"
+      dedicated     = false
+      autoscale     = true
+      gpu           = false
+      external_lb   = true
+    }
+  ]
+
+  users = [
+    {
+      user_arn = "arn:aws:iam::<account_id>:user/<user>"
+      username = "<user>"
+      group    = "system:masters"
+    }
+  ]
+}
+
+module "eks" {
+  source = "git@github.com:broadwing/terraform-eks.git"
+
+  name        = "main"
+  environment = "prod"
+
+  cluster_version = "1.14"
+
+  vpc_id  = module.vpc.vpc_id
+  subnets = module.vpc.private_subnets
+
+  nodes_additional_security_group_ids = [module.vpc.default_security_group_id]
+
+  aws_profile = "default"
+
+  external_dns_domain_filters = ["<route 53 domain>"]
+
+  nodes_key_name = "eks"
+
+  node_groups = local.node_groups
+
+  alb_prefix                   = "k8s"
+  alb_ingress_controller_image = "docker.io/m00nf1sh/aws-alb-ingress-controller:ingress-group-v1" # New ingress controller with shared alb support
+  get_dashboard_token          = "false"
+
+  map_users = local.users
+}
+```
+
 ## Dashboard
 
 After running you can access the dashboard with
