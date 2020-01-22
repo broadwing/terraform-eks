@@ -148,3 +148,8 @@ variable "node_groups" {
     external_lb   = bool
   }))
 }
+
+variable "pre_userdata" {
+  description = "Userdata to pre-append to the default userdata."
+  default     = ""
+}

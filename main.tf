@@ -99,7 +99,7 @@ module "eks" {
 
       # Vars for all worker groups
       key_name             = var.nodes_key_name
-      pre_userdata         = file("${path.module}/workers_user_data.sh")
+      pre_userdata         = template_file("${path.module}/workers_user_data.sh.tpl", {pre_userdata = var.pre_userdata})
       ami_id               = var.nodes_ami_id == "" ? ( wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id ) : var.nodes_ami_id
       termination_policies = ["OldestLaunchConfiguration", "Default"]
 
