@@ -136,7 +136,12 @@ variable "sealed_secrets_controller" {
 }
 
 variable "node_groups" {
-  type = list(object({
+  type        = list(any)
+  description = "The node groups to create. See `node_group_defaults` for possible options"
+}
+
+variable "node_group_defaults" {
+  type = object({
     name          = string
     min_count     = number
     count         = number
@@ -146,7 +151,18 @@ variable "node_groups" {
     autoscale     = bool
     gpu           = bool
     external_lb   = bool
-  }))
+  })
+  default = {
+    name          = null        # Name of the node group
+    min_count     = 1           # Min count for ASG
+    count         = 2           # Initial desired count for ASG
+    max_count     = 2           # Max count for ASG
+    instance_type = "m5.xlarge" # Instance type
+    dedicated     = false       # If true taint will be applied to group to make it a dedicated node group.
+    autoscale     = true        # If cluster autoscaling should control desired count
+    gpu           = false       # If GPU instance types should be used
+    external_lb   = true        # If ALB External LB should use these nodes for attaching to target group
+  }
 }
 
 variable "pre_userdata" {
