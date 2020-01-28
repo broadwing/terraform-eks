@@ -29,10 +29,26 @@ data "aws_ami" "eks_gpu_worker" {
   owners = ["602401143452"]
 }
 
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_id
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_id
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+  version                = "~> 1.10"
+}
+
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
 
-  version = "5.0.0"
+  version = "8.1.0"
 
   cluster_name    = var.name
   cluster_version = var.cluster_version
@@ -44,7 +60,6 @@ module "eks" {
   manage_aws_auth = "false"
 
   write_kubeconfig      = "false"
-  write_aws_auth_config = "false"
 
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.aws_profile
@@ -64,12 +79,12 @@ module "eks" {
       asg_max_size         = wg.max_count
       kubelet_extra_args   = replace(
                               <<-EOT
-                                --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId='$(curl http://169.254.169.254/latest/meta-data/instance-id)'
+                                --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
                                 ${wg.dedicated ? " --register-with-taints=dedicated=${wg.name}:NoSchedule" : ""}
-                                --eviction-hard="memory.available<5%"
-                                --eviction-soft="memory.available<10%"
-                                --eviction-soft-grace-period="memory.available=5m"
-                                --system-reserved="memory=500Mi"
+                                --eviction-hard=\"memory.available<5%\"
+                                --eviction-soft=\"memory.available<10%\"
+                                --eviction-soft-grace-period=\"memory.available=5m\"
+                                --system-reserved=\"memory=500Mi\"
                               EOT
                               , "\n", " ")
       autoscaling_enabled  = wg.autoscale
