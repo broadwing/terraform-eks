@@ -82,6 +82,7 @@ module "eks" {
       asg_min_size         = wg.min_count
       asg_desired_capacity = wg.count
       asg_max_size         = wg.max_count
+      subnets              = wg.subnets
       kubelet_extra_args   = replace(
                               <<-EOT
                                 --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)

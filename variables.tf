@@ -151,6 +151,7 @@ variable "node_group_defaults" {
     autoscale     = bool
     gpu           = bool
     external_lb   = bool
+    subnets       = list(string)
   })
   default = {
     name          = null        # Name of the node group
@@ -162,6 +163,7 @@ variable "node_group_defaults" {
     autoscale     = true        # If cluster autoscaling should control desired count
     gpu           = false       # If GPU instance types should be used
     external_lb   = true        # If ALB External LB should use these nodes for attaching to target group
+    subnets       = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
   }
 }
 

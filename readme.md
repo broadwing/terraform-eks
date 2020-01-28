@@ -63,6 +63,23 @@ module "eks" {
 }
 ```
 
+### Per AZ ASG
+
+If you want an ASG to be created per AZ you can do so with a node_groups definition like:
+
+```hcl
+node_groups = [
+    for subnet in module.vpc.private_subnets :
+    {
+      name          = "base"
+      instance_type = "m5.xlarge"
+      subnets       = [subnet]
+    }
+  ]
+```
+
+In this case one ASG will be created per AZ. All ASGs will have a launch config with the same "groupName" label. The cluster auto scaler can then scale each ASG and AZ individually. This is helpful when relying on EBS volume claims that could be tied to a specific AZ.
+
 ## Dashboard
 
 After running you can access the dashboard with
