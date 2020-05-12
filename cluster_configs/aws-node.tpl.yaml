@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   annotations:
@@ -99,7 +99,6 @@ spec:
           path: /var/run/docker.sock
           type: ""
         name: dockersock
-  templateGeneration: 1
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

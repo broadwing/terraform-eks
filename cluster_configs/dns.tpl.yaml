@@ -1,5 +1,5 @@
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
@@ -125,13 +125,16 @@ spec:
           name: coredns
         name: config-volume
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations: {}
   name: external-dns
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: external-dns
   strategy:
     type: Recreate
   template:

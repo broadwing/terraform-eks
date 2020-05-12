@@ -107,7 +107,7 @@ data:
 ---
 # Install CNI-Genie plugin on each slave node.
 kind: DaemonSet
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 metadata:
   name: genie-plugin
   namespace: kube-system
@@ -171,12 +171,15 @@ spec:
 ---
 # Genie network admission controller daemonset configuration
 # Genie network admission controller pods will run only in master nodes
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: genie-network-admission-controller
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      role: genie-network-admission-controller
   template:
     metadata:
       labels:
