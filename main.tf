@@ -2,7 +2,7 @@ locals {
   kubeconfig_path = abspath(local_file.kubeconfig.filename)
 
   defaulted_node_grops = [
-    for wg in var.node_groups:
+    for wg in var.node_groups :
     merge(var.node_group_defaults, wg)
   ]
 }
@@ -51,9 +51,8 @@ provider "kubernetes" {
 }
 
 module "eks" {
-  source = "terraform-aws-modules/eks/aws"
-
-  version = "8.1.0"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "12.0.0"
 
   cluster_name    = var.name
   cluster_version = var.cluster_version
@@ -64,7 +63,7 @@ module "eks" {
   #We need to manage auth ourselves since we create the workers later their role wont be added
   manage_aws_auth = "false"
 
-  write_kubeconfig      = "false"
+  write_kubeconfig = "false"
 
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.aws_profile
@@ -74,7 +73,7 @@ module "eks" {
 
   # This will launch an autoscaling group with only On-Demand instances
   worker_groups = [
-    for wg in local.defaulted_node_grops:
+    for wg in local.defaulted_node_grops :
     {
       # Worker group specific values
       name                 = wg.name
@@ -83,8 +82,8 @@ module "eks" {
       asg_desired_capacity = wg.count
       asg_max_size         = wg.max_count
       subnets              = wg.subnets
-      kubelet_extra_args   = replace(
-                              <<-EOT
+      kubelet_extra_args = replace(
+        <<-EOT
                                 --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
                                 ${wg.dedicated ? " --register-with-taints=dedicated=${wg.name}:NoSchedule" : ""}
                                 --eviction-hard=\"memory.available<5%\"
@@ -92,8 +91,8 @@ module "eks" {
                                 --eviction-soft-grace-period=\"memory.available=5m\"
                                 --system-reserved=\"memory=500Mi\"
                               EOT
-                              , "\n", " ")
-      autoscaling_enabled  = wg.autoscale
+      , "\n", " ")
+      autoscaling_enabled = wg.autoscale
 
       tags = slice([
         {
@@ -107,21 +106,21 @@ module "eks" {
           propagate_at_launch = true
         },
         {
-          key                  = "k8s.io/cluster-autoscaler/node-template/label"
-          value                = wg.name
-          propagate_at_launch  = true
+          key                 = "k8s.io/cluster-autoscaler/node-template/label"
+          value               = wg.name
+          propagate_at_launch = true
         },
         {
-          key                  = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
-          value                = "${wg.name}:NoSchedule"
-          propagate_at_launch  = true
+          key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
+          value               = "${wg.name}:NoSchedule"
+          propagate_at_launch = true
         }
       ], 0, wg.dedicated ? 4 : 3)
 
       # Vars for all worker groups
       key_name             = var.nodes_key_name
-      pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", {pre_userdata = var.pre_userdata})
-      ami_id               = var.nodes_ami_id == "" ? ( wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id ) : var.nodes_ami_id
+      pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", { pre_userdata = var.pre_userdata })
+      ami_id               = var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id
       termination_policies = ["OldestLaunchConfiguration", "Default"]
 
       enabled_metrics = [
@@ -137,7 +136,7 @@ module "eks" {
     }
   ]
 
-  cluster_enabled_log_types = ["api","audit","authenticator","controllerManager","scheduler"]
+  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = {
     Owner       = "Terraform"
