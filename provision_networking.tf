@@ -11,7 +11,7 @@ module "provision_genie" {
     default_plugins = var.calico_cni ? "calico" : ""
   }
 
-    module_depends_on = [module.wait_for_eks.command]
+  module_depends_on = [module.wait_for_eks.command]
 }
 
 # Calico
@@ -42,7 +42,8 @@ module "provision_aws_cni" {
   template = file("${path.module}/cluster_configs/aws-node.tpl.yaml")
 
   vars = {
-    externalsnat    = var.calico_cni ? "true" : "false"
+    externalsnat     = var.calico_cni ? "true" : "false"
+    excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
   }
 
   module_depends_on = var.calico_cni ? [module.provision_calico.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
@@ -58,7 +59,7 @@ module "provision_dns" {
   template = file("${path.module}/cluster_configs/dns.tpl.yaml")
 
   vars = {
-    cni             = var.remove_aws_vpc_cni ? "" : "aws"
+    cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
 
   module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]

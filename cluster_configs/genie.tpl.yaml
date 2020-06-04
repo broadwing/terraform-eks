@@ -88,6 +88,7 @@ data:
     {
         "name": "k8s-pod-network",
         "type": "genie",
+        "cniVersion": "0.2.0",
         "default_plugin": "${default_plugins}",
         "log_level": "info",
         "datastore_type": "kubernetes",
@@ -176,6 +177,8 @@ kind: DaemonSet
 metadata:
   name: genie-network-admission-controller
   namespace: kube-system
+  labels:
+    role: genie-network-admission-controller
 spec:
   selector:
     matchLabels:
