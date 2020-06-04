@@ -21,7 +21,7 @@ resource "aws_iam_role_policy_attachment" "AmazonEC2RoleForSSM" {
 # Enable permissions for autoscaling
 resource "aws_iam_role_policy_attachment" "workers_autoscaling" {
   policy_arn = aws_iam_policy.worker_autoscaling.arn
-  role       = module.eks.worker_iam_role_name[0]
+  role       = module.eks.worker_iam_role_name
 }
 
 resource "aws_iam_policy" "worker_autoscaling" {
