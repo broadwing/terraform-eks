@@ -92,9 +92,8 @@ module "eks" {
                                 --system-reserved=\"memory=500Mi\"
                               EOT
       , "\n", " ")
-      autoscaling_enabled = wg.autoscale
 
-      tags = slice([
+      tags = concat([
         {
           key                 = "groupName"
           value               = wg.name
@@ -109,13 +108,28 @@ module "eks" {
           key                 = "k8s.io/cluster-autoscaler/node-template/label"
           value               = wg.name
           propagate_at_launch = true
-        },
-        {
+        }],
+        wg.dedicated ? [{
           key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
           value               = "${wg.name}:NoSchedule"
           propagate_at_launch = true
-        }
-      ], 0, wg.dedicated ? 4 : 3)
+        }] : [],
+        wg.autoscale ? [{
+          key                 = "k8s.io/cluster-autoscaler/enabled"
+          value               = "true"
+          propagate_at_launch = false
+        },
+        {
+          "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
+          "propagate_at_launch" = "false"
+          "value"               = "true"
+        },
+        {
+          "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
+          "propagate_at_launch" = "false"
+          "value"               = "100Gi"
+        }] : []
+      )
 
       # Vars for all worker groups
       key_name             = var.nodes_key_name
