@@ -127,7 +127,7 @@ variable "alb_prefix" {
 
 variable "alb_ingress_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "894847497797.dkr.ecr.us-west-2.amazonaws.com/aws-alb-ingress-controller:v1.0.0"
+  default     = "docker.io/amazon/aws-alb-ingress-controller:v1.1.7"
 }
 
 variable "sealed_secrets_controller" {
