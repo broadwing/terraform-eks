@@ -1,7 +1,7 @@
 locals {
   kubeconfig_path = abspath(local_file.kubeconfig.filename)
 
-  defaulted_node_grops = [
+  defaulted_node_groups = [
     for wg in var.node_groups :
     merge(var.node_group_defaults, wg)
   ]
@@ -73,7 +73,7 @@ module "eks" {
 
   # This will launch an autoscaling group with only On-Demand instances
   worker_groups = [
-    for wg in local.defaulted_node_grops :
+    for wg in local.defaulted_node_groups :
     {
       # Worker group specific values
       name                 = wg.name
