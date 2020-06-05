@@ -181,6 +181,8 @@ module "eks" {
       } : {})
 
       # TODO register with taints
+      # TODO verify autoscaling working
+      # TODO verify load balancer tag works
 
       k8s_labels = merge(
         { "groupName" = mng.name },
