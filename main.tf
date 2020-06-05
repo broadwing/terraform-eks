@@ -165,7 +165,7 @@ module "eks" {
       max_capacity     = mng.max_count
       instance_type    = mng.instance_type
       disk_size        = mng.disk_size
-      subnets          = mng.subnets
+      subnets          = mng.subnets == null ? var.subnets : mng.subnets
 
       tags = concat([
         {
