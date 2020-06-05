@@ -167,43 +167,18 @@ module "eks" {
       disk_size        = mng.disk_size
       subnets          = mng.subnets == null ? var.subnets : mng.subnets
 
-      additional_tags = concat([
-        {
-          key                 = "groupName"
-          value               = mng.name
-          propagate_at_launch = true
-        },
-        {
-          key                 = "alpha.service-controller.kubernetes.io/exclude-balancer"
-          value               = mng.external_lb ? "false" : "true"
-          propagate_at_launch = true
-        },
-        {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label"
-          value               = mng.name
-          propagate_at_launch = true
-        }],
-        mng.dedicated ? [{
-          key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
-          value               = "${mng.name}:NoSchedule"
-          propagate_at_launch = true
-        }] : [],
-        mng.autoscale ? [{
-          key                 = "k8s.io/cluster-autoscaler/enabled"
-          value               = "true"
-          propagate_at_launch = false
-          },
-          {
-            "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
-            "propagate_at_launch" = "false"
-            "value"               = "true"
-          },
-          {
-            "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
-            "propagate_at_launch" = "false"
-            "value"               = "${mng.disk_size}Gi"
-        }] : []
-      )
+      additional_tags = merge({
+        "groupName"                                               = mng.name,
+        "alpha.service-controller.kubernetes.io/exclude-balancer" = mng.external_lb ? "false" : "true",
+        "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
+        }, mng.dedicated ? {
+        "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${mng.name}:NoSchedule"
+        } : {
+        }, mng.autoscale ? {
+        "k8s.io/cluster-autoscaler/enabled"                                   = "true",
+        "k8s.io/cluster-autoscaler/${var.name}"                               = "true",
+        "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "${mng.disk_size}Gi"
+      } : {})
 
       # TODO register with taints
 
