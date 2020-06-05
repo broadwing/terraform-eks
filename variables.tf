@@ -172,9 +172,10 @@ variable "node_group_defaults" {
   }
 }
 
-variable managed_node_group {
+variable managed_node_groups {
   type        = list(any)
   description = "The Managed Node groups to create. See `node_group_defaults` for possible options"
+  default     = []
 }
 
 variable "managed_node_group_defaults" {

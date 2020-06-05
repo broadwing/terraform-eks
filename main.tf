@@ -7,7 +7,7 @@ locals {
   ]
 
   defaulted_managed_node_groups = [
-    for mng in var.managed_node_group :
+    for mng in var.managed_node_groups :
     merge(var.managed_node_group_defaults, mng)
   ]
 }
