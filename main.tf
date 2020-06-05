@@ -5,6 +5,11 @@ locals {
     for wg in var.node_groups :
     merge(var.node_group_defaults, wg)
   ]
+
+  defaulted_managed_node_groups = [
+    for mng in var.managed_node_group :
+    merge(var.managed_node_group_defaults, mng)
+  ]
 }
 
 data "aws_caller_identity" "current" {
@@ -149,6 +154,20 @@ module "eks" {
       ]
     }
   ]
+
+  node_groups = [
+    for mng in local.defaulted_managed_node_groups :
+    {
+      # Worker group specific values
+      name             = mng.name
+      min_capacity     = mng.min_capacity
+      max_capacity     = mng.max_capacity
+      desired_capacity = mng.desired_capacity
+      instance_type    = mng.instance_type
+      k8s_labels       = mng.k8s_labels
+      subnets          = mng.subnets
+    }
+  ]  
 
   cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 

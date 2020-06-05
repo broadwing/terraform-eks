@@ -70,6 +70,11 @@ variable "external_dns_domain_filters" {
   type        = list(string)
 }
 
+variable "external_dns_type" {
+  description = "The Route53 zone type you are editing with External DNS --domain-type option"
+  default     = ""
+}
+
 variable "allow_ssh" {
   description = "If SSH should be allowed into the worker nodes security group"
   default     = "true"
@@ -166,6 +171,33 @@ variable "node_group_defaults" {
     subnets       = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
   }
 }
+
+variable managed_node_group {
+  type        = list(any)
+  description = "The Managed Node groups to create. See `node_group_defaults` for possible options"
+}
+
+variable "managed_node_group_defaults" {
+  type = object({
+    name = string
+    min_capacity     = number
+    max_capacity     = number
+    desired_capacity = number
+    instance_type    = string
+    k8s_labels       = map(string)
+    subnets          = list(string) 
+  })
+  default = {
+    name = "null"
+    instance_type = "m5.xlarge"
+    min_capacity = 1
+    max_capacity = 1
+    desired_capacity = 1
+    k8s_labels = []
+    subnets = "null"
+  }
+}
+
 
 variable "pre_userdata" {
   description = "Userdata to pre-append to the default userdata."

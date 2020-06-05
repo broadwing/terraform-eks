@@ -11,6 +11,7 @@ module "provision_external_dns" {
       "\n        - --domain-filter=",
       var.external_dns_domain_filters,
     )}" : ""
+    domain_type = var.external_dns_type
   }
 
   module_depends_on = [module.wait_for_eks.command]
