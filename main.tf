@@ -167,7 +167,7 @@ module "eks" {
       disk_size        = mng.disk_size
       subnets          = mng.subnets == null ? var.subnets : mng.subnets
 
-      tags = concat([
+      additional_tags = concat([
         {
           key                 = "groupName"
           value               = mng.name
