@@ -75,6 +75,8 @@ spec:
       name: metrics-server
       labels:
         k8s-app: metrics-server
+      annotations:
+        cni: "${cni}"
     spec:
       serviceAccountName: metrics-server
       volumes:

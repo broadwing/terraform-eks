@@ -10,7 +10,7 @@ module "provision_dashboard" {
   )
 
   vars = {
-    cni          = var.remove_aws_vpc_cni ? "" : "aws"
+    cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
 
   module_depends_on = [module.wait_for_eks.command]
