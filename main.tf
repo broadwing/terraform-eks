@@ -123,16 +123,16 @@ module "eks" {
           key                 = "k8s.io/cluster-autoscaler/enabled"
           value               = "true"
           propagate_at_launch = false
-        },
-        {
-          "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
-          "propagate_at_launch" = "false"
-          "value"               = "true"
-        },
-        {
-          "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
-          "propagate_at_launch" = "false"
-          "value"               = "100Gi"
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
+            "propagate_at_launch" = "false"
+            "value"               = "true"
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
+            "propagate_at_launch" = "false"
+            "value"               = "100Gi"
         }] : []
       )
 
@@ -160,14 +160,62 @@ module "eks" {
     {
       # Worker group specific values
       name             = mng.name
-      min_capacity     = mng.min_capacity
-      max_capacity     = mng.max_capacity
-      desired_capacity = mng.desired_capacity
+      min_capacity     = mng.min_count
+      desired_capacity = mng.count
+      max_capacity     = mng.max_count
       instance_type    = mng.instance_type
-      k8s_labels       = mng.k8s_labels
+      disk_size        = mng.disk_size
       subnets          = mng.subnets
+
+      tags = concat([
+        {
+          key                 = "groupName"
+          value               = mng.name
+          propagate_at_launch = true
+        },
+        {
+          key                 = "alpha.service-controller.kubernetes.io/exclude-balancer"
+          value               = mng.external_lb ? "false" : "true"
+          propagate_at_launch = true
+        },
+        {
+          key                 = "k8s.io/cluster-autoscaler/node-template/label"
+          value               = mng.name
+          propagate_at_launch = true
+        }],
+        mng.dedicated ? [{
+          key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
+          value               = "${mng.name}:NoSchedule"
+          propagate_at_launch = true
+        }] : [],
+        mng.autoscale ? [{
+          key                 = "k8s.io/cluster-autoscaler/enabled"
+          value               = "true"
+          propagate_at_launch = false
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
+            "propagate_at_launch" = "false"
+            "value"               = "true"
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
+            "propagate_at_launch" = "false"
+            "value"               = "${mng.disk_size}Gi"
+        }] : []
+      )
+
+      # TODO register with taints
+
+      k8s_labels = merge(
+        { "groupName" = mng.name },
+        mng.external_lb ? {} : {
+          "alpha.service-controller.kubernetes.io/exclude-balancer" = "true"
+        },
+        mng.additional_labels
+      )
     }
-  ]  
+  ]
 
   cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 

@@ -179,22 +179,30 @@ variable managed_node_group {
 
 variable "managed_node_group_defaults" {
   type = object({
-    name = string
-    min_capacity     = number
-    max_capacity     = number
-    desired_capacity = number
-    instance_type    = string
-    k8s_labels       = map(string)
-    subnets          = list(string) 
+    name              = string
+    min_count         = number
+    count             = number
+    max_count         = number
+    instance_type     = string
+    dedicated         = bool
+    autoscale         = bool
+    external_lb       = bool
+    subnets           = list(string)
+    disk_size         = number
+    additional_labels = map(string)
   })
   default = {
-    name = "null"
-    instance_type = "m5.xlarge"
-    min_capacity = 1
-    max_capacity = 1
-    desired_capacity = 1
-    k8s_labels = []
-    subnets = "null"
+    name              = null        # Name of the node group
+    min_count         = 1           # Min count for ASG
+    count             = 2           # Initial desired count for ASG
+    max_count         = 2           # Max count for ASG
+    instance_type     = "m5.xlarge" # Instance type
+    dedicated         = false       # If true taint will be applied to group to make it a dedicated node group.
+    autoscale         = true        # If cluster autoscaling should control desired count
+    external_lb       = true        # If ALB External LB should use these nodes for attaching to target group
+    subnets           = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
+    disk_size         = 100         # Defaults to 100gb, same as worker node groups
+    additional_labels = {}          # Any additional labels to add
   }
 }
 
