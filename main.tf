@@ -168,6 +168,7 @@ module "eks" {
       subnets          = mng.subnets == null ? var.subnets : mng.subnets
 
       additional_tags = merge({
+        "name"                                                    = "${var.name}-${mng.name}-eks-managed",
         "groupName"                                               = mng.name,
         "alpha.service-controller.kubernetes.io/exclude-balancer" = mng.external_lb ? "false" : "true",
         "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
@@ -191,6 +192,8 @@ module "eks" {
         },
         mng.additional_labels
       )
+
+      ec2_ssh_key = var.allow_ssh ? var.nodes_key_name : null
     }
   ]
 
