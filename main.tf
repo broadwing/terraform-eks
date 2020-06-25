@@ -182,6 +182,12 @@ module "eks" {
       } : {})
 
       # TODO register with taints
+      # https://github.com/aws/containers-roadmap/issues/585
+      # https://github.com/aws/containers-roadmap/issues/864
+
+      # TODO SSM Support
+      # https://github.com/aws/containers-roadmap/issues/593
+
       # TODO verify autoscaling working
       # TODO verify load balancer tag works
 
