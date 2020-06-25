@@ -212,3 +212,9 @@ variable "pre_userdata" {
   description = "Userdata to pre-append to the default userdata."
   default     = ""
 }
+
+variable "enable_irsa" {
+  description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
+  type        = bool
+  default     = false
+}

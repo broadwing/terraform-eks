@@ -74,6 +74,8 @@ module "eks" {
     AWS_PROFILE = var.aws_profile
   }
 
+  enable_irsa = var.enable_irsa
+
   worker_additional_security_group_ids = var.nodes_additional_security_group_ids
 
   # This will launch an autoscaling group with only On-Demand instances
