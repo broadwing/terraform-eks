@@ -9,7 +9,8 @@ module "provision_metrics_server" {
   )
 
   vars = {
+    cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
 
-    module_depends_on = [module.wait_for_eks.command]
+  module_depends_on = [module.wait_for_eks.command]
 }

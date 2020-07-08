@@ -4,7 +4,7 @@ variable "name" {
 
 variable "cluster_version" {
   description = "Version of the cluster"
-  default     = "1.13"
+  default     = "1.16"
 }
 
 variable "environment" {
@@ -70,6 +70,11 @@ variable "external_dns_domain_filters" {
   type        = list(string)
 }
 
+variable "external_dns_type" {
+  description = "The Route53 zone type you are editing with External DNS --domain-type option"
+  default     = ""
+}
+
 variable "allow_ssh" {
   description = "If SSH should be allowed into the worker nodes security group"
   default     = "true"
@@ -127,7 +132,7 @@ variable "alb_prefix" {
 
 variable "alb_ingress_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "894847497797.dkr.ecr.us-west-2.amazonaws.com/aws-alb-ingress-controller:v1.0.0"
+  default     = "docker.io/amazon/aws-alb-ingress-controller:v1.1.7"
 }
 
 variable "sealed_secrets_controller" {
@@ -167,7 +172,49 @@ variable "node_group_defaults" {
   }
 }
 
+variable managed_node_groups {
+  type        = list(any)
+  description = "The Managed Node groups to create. See `node_group_defaults` for possible options"
+  default     = []
+}
+
+variable "managed_node_group_defaults" {
+  type = object({
+    name              = string
+    min_count         = number
+    count             = number
+    max_count         = number
+    instance_type     = string
+    dedicated         = bool
+    autoscale         = bool
+    external_lb       = bool
+    subnets           = list(string)
+    disk_size         = number
+    additional_labels = map(string)
+  })
+  default = {
+    name              = null        # Name of the node group
+    min_count         = 1           # Min count for ASG
+    count             = 2           # Initial desired count for ASG
+    max_count         = 2           # Max count for ASG
+    instance_type     = "m5.xlarge" # Instance type
+    dedicated         = false       # If true taint will be applied to group to make it a dedicated node group.
+    autoscale         = true        # If cluster autoscaling should control desired count
+    external_lb       = true        # If ALB External LB should use these nodes for attaching to target group
+    subnets           = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
+    disk_size         = 100         # Defaults to 100gb, same as worker node groups
+    additional_labels = {}          # Any additional labels to add
+  }
+}
+
+
 variable "pre_userdata" {
   description = "Userdata to pre-append to the default userdata."
   default     = ""
+}
+
+variable "enable_irsa" {
+  description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
+  type        = bool
+  default     = false
 }

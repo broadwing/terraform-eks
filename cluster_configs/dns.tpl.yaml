@@ -60,7 +60,7 @@ spec:
       - args:
         - -conf
         - /etc/coredns/Corefile
-        image: 602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.2.6
+        image: 602401143452.dkr.ecr.us-east-1.amazonaws.com/eks/coredns:v1.6.6
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 5
@@ -124,36 +124,3 @@ spec:
             path: Corefile
           name: coredns
         name: config-volume
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations: {}
-  name: external-dns
-  namespace: kube-system
-spec:
-  selector:
-    matchLabels:
-      app: external-dns
-  strategy:
-    type: Recreate
-  template:
-    metadata:
-      labels:
-        app: external-dns
-      annotations:
-        cni: "${cni}"
-    spec:
-      containers:
-      - args:
-        - "--source=service"
-        - "--source=ingress"
-        - "--domain-filter=sparkneurotest.com"
-        - "--provider=aws"
-        - "--policy=upsert-only"
-        - "--registry=txt"
-        - "--txt-owner-id=my-identifier"
-        image: registry.opensource.zalan.do/teapot/external-dns:v0.5.9
-        name: external-dns
-      serviceAccountName: external-dns
-

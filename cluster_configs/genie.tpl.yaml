@@ -88,6 +88,7 @@ data:
     {
         "name": "k8s-pod-network",
         "type": "genie",
+        "cniVersion": "0.2.0",
         "default_plugin": "${default_plugins}",
         "log_level": "info",
         "datastore_type": "kubernetes",
@@ -169,13 +170,16 @@ spec:
             path: /etc/cni/net.d
 
 ---
-# Genie network admission controller daemonset configuration
-# Genie network admission controller pods will run only in master nodes
+# ~Genie network admission controller daemonset configuration~
+# ~Genie network admission controller pods will run only in master nodes~
+# Changed to run as deployment on non master nodes for eks
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: genie-network-admission-controller
   namespace: kube-system
+  labels:
+    role: genie-network-admission-controller
 spec:
   selector:
     matchLabels:
@@ -186,18 +190,9 @@ spec:
         role: genie-network-admission-controller
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
+        # Admission controllers need to run with aws ip
+        cni: "aws"
     spec:
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        effect: NoSchedule
-      - key: node.kubernetes.io/not-ready
-        effect: NoSchedule
-        operator: Exists
-      - key: CriticalAddonsOnly
-        operator: Exists
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      hostNetwork: true
       serviceAccountName: genie-plugin
       containers:
         - name: genie-network-admission-controller

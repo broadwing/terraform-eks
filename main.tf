@@ -1,9 +1,14 @@
 locals {
   kubeconfig_path = abspath(local_file.kubeconfig.filename)
 
-  defaulted_node_grops = [
-    for wg in var.node_groups:
+  defaulted_node_groups = [
+    for wg in var.node_groups :
     merge(var.node_group_defaults, wg)
+  ]
+
+  defaulted_managed_node_groups = [
+    for mng in var.managed_node_groups :
+    merge(var.managed_node_group_defaults, mng)
   ]
 }
 
@@ -51,9 +56,8 @@ provider "kubernetes" {
 }
 
 module "eks" {
-  source = "terraform-aws-modules/eks/aws"
-
-  version = "8.1.0"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "12.1.0"
 
   cluster_name    = var.name
   cluster_version = var.cluster_version
@@ -64,17 +68,19 @@ module "eks" {
   #We need to manage auth ourselves since we create the workers later their role wont be added
   manage_aws_auth = "false"
 
-  write_kubeconfig      = "false"
+  write_kubeconfig = "false"
 
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.aws_profile
   }
 
+  enable_irsa = var.enable_irsa
+
   worker_additional_security_group_ids = var.nodes_additional_security_group_ids
 
   # This will launch an autoscaling group with only On-Demand instances
   worker_groups = [
-    for wg in local.defaulted_node_grops:
+    for wg in local.defaulted_node_groups :
     {
       # Worker group specific values
       name                 = wg.name
@@ -83,8 +89,8 @@ module "eks" {
       asg_desired_capacity = wg.count
       asg_max_size         = wg.max_count
       subnets              = wg.subnets
-      kubelet_extra_args   = replace(
-                              <<-EOT
+      kubelet_extra_args = replace(
+        <<-EOT
                                 --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
                                 ${wg.dedicated ? " --register-with-taints=dedicated=${wg.name}:NoSchedule" : ""}
                                 --eviction-hard=\"memory.available<5%\"
@@ -92,10 +98,9 @@ module "eks" {
                                 --eviction-soft-grace-period=\"memory.available=5m\"
                                 --system-reserved=\"memory=500Mi\"
                               EOT
-                              , "\n", " ")
-      autoscaling_enabled  = wg.autoscale
+      , "\n", " ")
 
-      tags = slice([
+      tags = concat([
         {
           key                 = "groupName"
           value               = wg.name
@@ -107,21 +112,36 @@ module "eks" {
           propagate_at_launch = true
         },
         {
-          key                  = "k8s.io/cluster-autoscaler/node-template/label"
-          value                = wg.name
-          propagate_at_launch  = true
-        },
-        {
-          key                  = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
-          value                = "${wg.name}:NoSchedule"
-          propagate_at_launch  = true
-        }
-      ], 0, wg.dedicated ? 4 : 3)
+          key                 = "k8s.io/cluster-autoscaler/node-template/label"
+          value               = wg.name
+          propagate_at_launch = true
+        }],
+        wg.dedicated ? [{
+          key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
+          value               = "${wg.name}:NoSchedule"
+          propagate_at_launch = true
+        }] : [],
+        wg.autoscale ? [{
+          key                 = "k8s.io/cluster-autoscaler/enabled"
+          value               = "true"
+          propagate_at_launch = false
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
+            "propagate_at_launch" = "false"
+            "value"               = "true"
+          },
+          {
+            "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
+            "propagate_at_launch" = "false"
+            "value"               = "100Gi"
+        }] : []
+      )
 
       # Vars for all worker groups
       key_name             = var.nodes_key_name
-      pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", {pre_userdata = var.pre_userdata})
-      ami_id               = var.nodes_ami_id == "" ? ( wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id ) : var.nodes_ami_id
+      pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", { pre_userdata = var.pre_userdata })
+      ami_id               = var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id
       termination_policies = ["OldestLaunchConfiguration", "Default"]
 
       enabled_metrics = [
@@ -137,7 +157,55 @@ module "eks" {
     }
   ]
 
-  cluster_enabled_log_types = ["api","audit","authenticator","controllerManager","scheduler"]
+  node_groups = [
+    for mng in local.defaulted_managed_node_groups :
+    {
+      # Worker group specific values
+      name             = mng.name
+      min_capacity     = mng.min_count
+      desired_capacity = mng.count
+      max_capacity     = mng.max_count
+      instance_type    = mng.instance_type
+      disk_size        = mng.disk_size
+      subnets          = mng.subnets == null ? var.subnets : mng.subnets
+
+      additional_tags = merge({
+        "name"                                                    = "${var.name}-${mng.name}-eks-managed",
+        "groupName"                                               = mng.name,
+        "alpha.service-controller.kubernetes.io/exclude-balancer" = mng.external_lb ? "false" : "true",
+        "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
+        }, mng.dedicated ? {
+        "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${mng.name}:NoSchedule"
+        } : {
+        }, mng.autoscale ? {
+        "k8s.io/cluster-autoscaler/enabled"                                   = "true",
+        "k8s.io/cluster-autoscaler/${var.name}"                               = "true",
+        "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "${mng.disk_size}Gi"
+      } : {})
+
+      # TODO register with taints
+      # https://github.com/aws/containers-roadmap/issues/585
+      # https://github.com/aws/containers-roadmap/issues/864
+
+      # TODO SSM Support
+      # https://github.com/aws/containers-roadmap/issues/593
+
+      # TODO verify autoscaling working
+      # TODO verify load balancer tag works
+
+      k8s_labels = merge(
+        { "groupName" = mng.name },
+        mng.external_lb ? {} : {
+          "alpha.service-controller.kubernetes.io/exclude-balancer" = "true"
+        },
+        mng.additional_labels
+      )
+
+      key_name = var.allow_ssh ? var.nodes_key_name : null
+    }
+  ]
+
+  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
   tags = {
     Owner       = "Terraform"
