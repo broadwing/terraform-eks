@@ -201,7 +201,7 @@ module "eks" {
         mng.additional_labels
       )
 
-      ec2_ssh_key = var.allow_ssh ? var.nodes_key_name : null
+      key_name = var.allow_ssh ? var.nodes_key_name : null
     }
   ]
 
