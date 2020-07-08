@@ -51,6 +51,7 @@ module "eks" {
 
   external_dns_domain_filters = ["<route 53 domain>"]
   external_dns_type = "<internal|external>" or "" for auto-detect (default)
+  external_dns_policy_mode = "upsert-only" (default)
 
   nodes_key_name = "eks"
 
