@@ -13,9 +13,9 @@ SECRET_ID=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret | grep ek
 TOKEN=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret -o json $SECRET_ID | jq -r .data.token)
 
 if [ "$(uname)" == "Darwin" ]; then
-    DECODED_TOKEN = $(echo "$TOKEN" | base64 -D)
+    DECODED_TOKEN=$(echo "$TOKEN" | base64 -D)
 else
-    DECODED_TOKEN = $(echo "$TOKEN" | base64 -d)
+    DECODED_TOKEN=$(echo "$TOKEN" | base64 -d)
 fi
 
 # Safely produce a JSON object containing the result value.
