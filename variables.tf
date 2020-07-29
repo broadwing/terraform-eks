@@ -218,3 +218,9 @@ variable "enable_irsa" {
   type        = bool
   default     = false
 }
+
+variable "use_system_kubectl" {
+  description = "If system kubectl and iam-authenticator should be used. Embedded version is for linux"
+  type        = bool
+  default     = false
+}

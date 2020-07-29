@@ -13,6 +13,9 @@ module "provision_dashboard" {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
+
   module_depends_on = [module.wait_for_eks.command]
 }
 
@@ -28,6 +31,8 @@ module "provision_admin_service_account" {
 
   vars = {
   }
+
+  use_system_kubectl = var.use_system_kubectl
 
   module_depends_on = [module.wait_for_eks.command]
 }

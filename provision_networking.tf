@@ -11,6 +11,8 @@ module "provision_genie" {
     default_plugins = var.calico_cni ? "calico" : ""
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = [module.wait_for_eks.command]
 }
 
@@ -29,6 +31,8 @@ module "provision_calico" {
     ip_autodetection = var.remove_aws_vpc_cni ? "first-found" : "interface=eth0"
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
@@ -46,6 +50,9 @@ module "provision_aws_cni" {
     excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
+
   module_depends_on = var.calico_cni ? [module.provision_calico.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
@@ -61,6 +68,9 @@ module "provision_dns" {
   vars = {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
+
+  use_system_kubectl = var.use_system_kubectl
+
 
   module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }

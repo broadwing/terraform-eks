@@ -11,5 +11,8 @@ module "provision_ebs" {
     encrypted = var.ebs_default_encrypted
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
+
   module_depends_on = [module.wait_for_eks.command]
 }

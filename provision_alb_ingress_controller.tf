@@ -12,6 +12,8 @@ module "provision_alb_ingress_controller_role" {
     cluster_name = var.environment
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = [module.wait_for_eks.command]
 }
 
@@ -30,6 +32,9 @@ module "provision_alb_ingress_controller" {
     alb_prefix   = var.alb_prefix
     alb_image    = var.alb_ingress_controller_image
   }
+
+  use_system_kubectl = var.use_system_kubectl
+
 
   module_depends_on = [module.wait_for_eks.command]
 
