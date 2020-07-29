@@ -14,5 +14,7 @@ module "provision_external_dns" {
     domain_type = var.external_dns_type
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = [module.wait_for_eks.command]
 }

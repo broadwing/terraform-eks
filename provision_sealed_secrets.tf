@@ -13,6 +13,8 @@ module "provision_sealed_secrets_controller" {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = [module.wait_for_eks.command]
 }
 
@@ -26,6 +28,8 @@ module "provision_sealed_secrets_crd" {
 
   vars = {
   }
+
+  use_system_kubectl = var.use_system_kubectl
 
   module_depends_on = [module.wait_for_eks.command]
 }

@@ -88,7 +88,7 @@ module "eks" {
       asg_min_size         = wg.min_count
       asg_desired_capacity = wg.count
       asg_max_size         = wg.max_count
-      subnets              = wg.subnets
+      subnets              = wg.subnets == null ? var.subnets : wg.subnets
       kubelet_extra_args = replace(
         <<-EOT
                                 --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
@@ -223,6 +223,8 @@ resource "local_file" "kubeconfig" {
 module "wait_for_eks" {
   source     = "./modules/kubectl-apply"
   kubeconfig = abspath(local_file.kubeconfig.filename)
+
+  use_system_kubectl = var.use_system_kubectl
 
   extra_command = <<-EOT
     until kubectl version

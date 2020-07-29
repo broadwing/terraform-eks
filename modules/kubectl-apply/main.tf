@@ -1,5 +1,6 @@
 locals {
-  bin_path = abspath("${path.module}/bin")
+  bin_path    = abspath("${path.module}/bin")
+  path_export = var.use_system_kubectl ? "" : "PATH=${local.bin_path}:$PATH"
 }
 
 data "template_file" "manifest" {
@@ -19,7 +20,7 @@ resource "null_resource" "command" {
 
   provisioner "local-exec" {
     command = <<-EOT
-    PATH=${local.bin_path}:$PATH
+    ${local.path_export}
     ${var.extra_command}
     EOT
 
@@ -40,7 +41,7 @@ resource "null_resource" "apply" {
 
   provisioner "local-exec" {
     command = <<EOT
-PATH=${local.bin_path}:$PATH
+${local.path_export}
 cat <<'EOF' | kubectl apply -f -
 ${data.template_file.manifest[0].rendered}
 EOF

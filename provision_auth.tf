@@ -18,6 +18,8 @@ module "provision_auth_config" {
     map_accounts = join("\n", data.template_file.map_accounts.*.rendered)
   }
 
+  use_system_kubectl = var.use_system_kubectl
+
   module_depends_on = [module.provision_calico.apply, module.wait_for_eks.command]
 }
 
