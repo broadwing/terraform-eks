@@ -12,7 +12,13 @@ eval "$(jq -r '@sh "KUBECONFIG=\(.kubeconfig)"')"
 SECRET_ID=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret | grep eks-admin | awk '{print $1}')
 TOKEN=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret -o json $SECRET_ID | jq -r .data.token | base64 -d)
 
+if [ "$(uname)" == "Darwin" ]; then
+    DECODED_TOKEN = $(echo "$TOKEN" | base64 -D)
+else
+    DECODED_TOKEN = $(echo "$TOKEN" | base64 -d)
+fi
+
 # Safely produce a JSON object containing the result value.
 # jq will ensure that the value is properly quoted
 # and escaped to produce a valid JSON string.
-jq -n --arg secret_id "$SECRET_ID" --arg token "$TOKEN"  '{"token":$token, "secret_id":$secret_id}'
+jq -n --arg secret_id "$SECRET_ID" --arg token "$DECODED_TOKEN"  '{"token":$token, "secret_id":$secret_id}'
