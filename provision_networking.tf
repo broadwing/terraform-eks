@@ -52,7 +52,6 @@ module "provision_aws_cni" {
 
   use_system_kubectl = var.use_system_kubectl
 
-
   module_depends_on = var.calico_cni ? [module.provision_calico.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
@@ -70,7 +69,6 @@ module "provision_dns" {
   }
 
   use_system_kubectl = var.use_system_kubectl
-
 
   module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }

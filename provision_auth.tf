@@ -20,7 +20,6 @@ module "provision_auth_config" {
 
   use_system_kubectl = var.use_system_kubectl
 
-
   module_depends_on = [module.provision_calico.apply, module.wait_for_eks.command]
 }
 

@@ -16,6 +16,5 @@ module "provision_external_dns" {
 
   use_system_kubectl = var.use_system_kubectl
 
-
   module_depends_on = [module.wait_for_eks.command]
 }

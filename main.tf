@@ -224,6 +224,8 @@ module "wait_for_eks" {
   source     = "./modules/kubectl-apply"
   kubeconfig = abspath(local_file.kubeconfig.filename)
 
+  use_system_kubectl = var.use_system_kubectl
+
   extra_command = <<-EOT
     until kubectl version
     do
