@@ -10,7 +10,7 @@ set -e
 eval "$(jq -r '@sh "KUBECONFIG=\(.kubeconfig)"')"
 
 SECRET_ID=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret | grep eks-admin | awk '{print $1}')
-TOKEN=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret -o json $SECRET_ID | jq -r .data.token | base64 -d)
+TOKEN=$(kubectl --kubeconfig=$KUBECONFIG -n kube-system get secret -o json $SECRET_ID | jq -r .data.token)
 
 if [ "$(uname)" == "Darwin" ]; then
     DECODED_TOKEN = $(echo "$TOKEN" | base64 -D)
