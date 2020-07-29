@@ -37,12 +37,12 @@ module "provision_admin_service_account" {
 }
 
 data "external" "dashboard-token" {
-  count = var.get_dashboard_token == "true" ? 1 : 0
+  count = var.get_dashboard_token == "true" && var.dashboard ? 1 : 0
 
   program = ["${path.module}/bin/get_dashboard_token.sh"]
 
   query = {
     kubeconfig       = local.kubeconfig_path
-    wait_for_account = module.provision_admin_service_account.apply.id
+    wait_for_account = module.provision_admin_service_account.apply[0].id
   }
 }
