@@ -27,7 +27,7 @@ locals {
 
   users = [
     {
-      user_arn = "arn:aws:iam::<account_id>:user/<user>"
+      userarn  = "arn:aws:iam::<account_id>:user/<user>"
       username = "<user>"
       group    = "system:masters"
     }
@@ -60,8 +60,6 @@ module "eks" {
   alb_ingress_controller_image = "docker.io/m00nf1sh/aws-alb-ingress-controller:v1.2.0-alpha.2" # New ingress controller with shared alb support
   get_dashboard_token          = "false"
 
-  use_system_kubectl = true
-
   map_users = local.users
 }
 ```
@@ -85,8 +83,11 @@ In this case one ASG will be created per AZ. All ASGs will have a launch config 
 
 ## Dashboard
 
-After running you can access the dashboard with
-`kubectl --kubeconfig <env>.kubeconfig --namespace kube-system port-forward svc/kubernetes-dashboard  8443:443`
+After running you can access the dashboard by
+
+1. Retrieving the token from the output `dashboard_token`
+2. Running `kubectl proxy`
+3. Visiting <http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login> and entering the token from #1
 
 ## VPC AWS CNI
 

@@ -21,7 +21,7 @@ variable "subnets" {
 }
 
 variable "aws_profile" {
-  description = "AWS Profile to use for kubectl commands"
+  description = "AWS Profile to use when generating kubeconfig"
 }
 
 variable "genie_cni" {
@@ -46,7 +46,8 @@ variable "dashboard" {
 
 variable "get_dashboard_token" {
   description = "If dashboard token should be retrieved"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "alb_ingress_controller" {
@@ -102,23 +103,30 @@ variable "nodes_ami_id" {
 }
 
 variable "map_accounts" {
-  description = "Additional AWS account numbers to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
+  description = "Additional AWS account numbers to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
   type        = list(string)
   default     = []
 }
 
 variable "map_roles" {
-  description = "Additional IAM roles to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
-  type        = list(map(string))
-  default     = []
+  description = "Additional IAM roles to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  type = list(object({
+    rolearn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
 }
 
 variable "map_users" {
-  description = "Additional IAM users to add to the aws-auth configmap. See examples/eks_test_fixture/variables.tf for example format."
-  type        = list(map(string))
-  default     = []
+  description = "Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
+  type = list(object({
+    userarn  = string
+    username = string
+    groups   = list(string)
+  }))
+  default = []
 }
-
 
 variable "ebs_default_encrypted" {
   description = "If we should enable EBS encryption by default for k8s created volumes"
@@ -215,12 +223,6 @@ variable "pre_userdata" {
 
 variable "enable_irsa" {
   description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
-  type        = bool
-  default     = false
-}
-
-variable "use_system_kubectl" {
-  description = "If system kubectl and iam-authenticator should be used. Embedded version is for linux"
   type        = bool
   default     = false
 }

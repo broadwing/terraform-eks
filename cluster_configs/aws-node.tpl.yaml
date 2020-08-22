@@ -64,6 +64,10 @@ spec:
         k8s-app: aws-node
     spec:
       priorityClassName: system-node-critical
+      %{ if disabled }
+      nodeSelector:
+        disabled: "true"
+      %{ endif }
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

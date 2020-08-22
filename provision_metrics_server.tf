@@ -1,18 +1,18 @@
-module "provision_metrics_server" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.metrics_server
-
-  template = file(
-    "${path.module}/cluster_configs/metrics-server.tpl.yaml",
-  )
-
+data "kubectl_path_documents" "metrics_server_resources" {
+  pattern = "${path.module}/cluster_configs/metrics-server.tpl.yaml"
   vars = {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
+}
 
-  use_system_kubectl = var.use_system_kubectl
+resource "kubectl_manifest" "metrics_server_resources" {
+  count = var.metrics_server ? length(data.kubectl_path_documents.metrics_server_resources.documents) : 0
 
-  module_depends_on = [module.wait_for_eks.command]
+  yaml_body = element(data.kubectl_path_documents.metrics_server_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
 }

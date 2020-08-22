@@ -1,6 +1,4 @@
 locals {
-  kubeconfig_path = abspath(local_file.kubeconfig.filename)
-
   defaulted_node_groups = [
     for wg in var.node_groups :
     merge(var.node_group_defaults, wg)
@@ -13,6 +11,9 @@ locals {
 }
 
 data "aws_caller_identity" "current" {
+}
+
+data "aws_partition" "current" {
 }
 
 data "aws_ami" "eks_worker" {
@@ -55,6 +56,14 @@ provider "kubernetes" {
   version                = "~> 1.10"
 }
 
+provider "kubectl" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+}
+
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "12.2.0"
@@ -66,9 +75,13 @@ module "eks" {
   subnets = var.subnets
 
   #We need to manage auth ourselves since we create the workers later their role wont be added
-  manage_aws_auth = "false"
+  # manage_aws_auth = "true"
+  map_users    = var.map_users
+  map_roles    = var.map_roles
+  map_accounts = var.map_accounts
 
-  write_kubeconfig = "false"
+  write_kubeconfig   = "true"
+  config_output_path = abspath("${path.root}/${var.name}.kubeconfig")
 
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.aws_profile
@@ -114,6 +127,22 @@ module "eks" {
         {
           key                 = "k8s.io/cluster-autoscaler/node-template/label"
           value               = wg.name
+          propagate_at_launch = true
+        },
+        # Also forces nodes to not be created until cni is applied
+        {
+          key                 = "k8s.io/cni/genie"
+          value               = var.genie_cni ? kubectl_manifest.genie_resources[0].uid : "false"
+          propagate_at_launch = true
+        },
+        {
+          key                 = "k8s.io/cni/calico"
+          value               = var.calico_cni ? kubectl_manifest.calico_resources[0].uid : "false"
+          propagate_at_launch = true
+        },
+        {
+          key                 = "k8s.io/cni/aws"
+          value               = kubectl_manifest.aws_cni_resources[0].uid
           propagate_at_launch = true
         }],
         wg.dedicated ? [{
@@ -211,26 +240,4 @@ module "eks" {
     Owner       = "Terraform"
     Environment = var.environment
   }
-}
-
-resource "local_file" "kubeconfig" {
-  content_base64 = base64encode(module.eks.kubeconfig)
-  filename       = abspath("${path.root}/${var.name}.kubeconfig")
-
-  file_permission = "0644"
-}
-
-module "wait_for_eks" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = abspath(local_file.kubeconfig.filename)
-
-  use_system_kubectl = var.use_system_kubectl
-
-  extra_command = <<-EOT
-    until kubectl version
-    do
-      echo "Waiting for cluster"
-      sleep 10
-    done
-  EOT
 }

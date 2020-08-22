@@ -1,74 +1,91 @@
-# Genie
-module "provision_genie" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
 
-  apply = var.genie_cni
-
-  template = file("${path.module}/cluster_configs/genie.tpl.yaml")
-
+# TODO need to simulate
+# extra_command = var.remove_aws_vpc_cni ? "kubectl --namespace kube-system delete daemonsets aws-node" : ""
+data "kubectl_path_documents" "genie_resources" {
+  pattern = "${path.module}/cluster_configs/genie.tpl.yaml"
   vars = {
     default_plugins = var.calico_cni ? "calico" : ""
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = [module.wait_for_eks.command]
 }
 
-# Calico
-module "provision_calico" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.calico_cni
-
-  template = file("${path.module}/cluster_configs/calico.tpl.yaml")
-
-  extra_command = var.remove_aws_vpc_cni ? "kubectl --namespace kube-system delete daemonsets aws-node" : ""
-
+data "kubectl_path_documents" "calico_resources" {
+  pattern = "${path.module}/cluster_configs/calico.tpl.yaml"
   vars = {
     ip_autodetection = var.remove_aws_vpc_cni ? "first-found" : "interface=eth0"
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
-# aws cni driver
-module "provision_aws_cni" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.remove_aws_vpc_cni ? "false" : "true"
-
-  template = file("${path.module}/cluster_configs/aws-node.tpl.yaml")
-
+data "kubectl_path_documents" "aws_cni_resources" {
+  pattern = "${path.module}/cluster_configs/aws-node.tpl.yaml"
   vars = {
     externalsnat     = var.calico_cni ? "true" : "false"
     excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
+    disabled         = var.remove_aws_vpc_cni
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = var.calico_cni ? [module.provision_calico.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
 }
 
-# Set dns to run on aws cni so all containers in calico and aws have dns access
-module "provision_dns" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.genie_cni
-
-  template = file("${path.module}/cluster_configs/dns.tpl.yaml")
-
+data "kubectl_path_documents" "k8s_dns_resources" {
+  pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
   vars = {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
+}
 
-  use_system_kubectl = var.use_system_kubectl
+resource "kubectl_manifest" "genie_resources" {
+  count = var.genie_cni ? length(data.kubectl_path_documents.genie_resources.documents) : 0
 
-  module_depends_on = var.genie_cni ? [module.provision_genie.apply, module.wait_for_eks.command] : [module.wait_for_eks.command]
+  yaml_body = element(data.kubectl_path_documents.genie_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
+}
+
+resource "kubectl_manifest" "calico_resources" {
+  count = var.calico_cni ? length(data.kubectl_path_documents.calico_resources.documents) : 0
+
+  yaml_body = element(data.kubectl_path_documents.calico_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  depends_on = [
+    # Forces waiting for cluster to be available
+    module.eks.cluster_id,
+    kubectl_manifest.genie_resources
+  ]
+}
+
+resource "kubectl_manifest" "aws_cni_resources" {
+  count     = length(data.kubectl_path_documents.aws_cni_resources.documents)
+  force_new = true
+
+  yaml_body = element(data.kubectl_path_documents.aws_cni_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  depends_on = [
+    # Forces waiting for cluster to be available
+    module.eks.cluster_id,
+    kubectl_manifest.calico_resources
+  ]
+}
+
+resource "kubectl_manifest" "k8s_dns_resources" {
+  count     = var.genie_cni ? length(data.kubectl_path_documents.k8s_dns_resources.documents) : 0
+  force_new = true
+
+  yaml_body = element(data.kubectl_path_documents.k8s_dns_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  depends_on = [
+    # Forces waiting for cluster to be available
+    module.eks.cluster_id,
+    kubectl_manifest.genie_resources
+  ]
 }

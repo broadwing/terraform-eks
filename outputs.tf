@@ -1,5 +1,5 @@
-output "dashboard-token" {
-  value = var.get_dashboard_token == "true" ? lookup(data.external.dashboard-token[0].result, "token", "") : ""
+output "dashboard_token" {
+  value = var.get_dashboard_token ? data.kubernetes_secret.dashboard_token.data.token : null
 }
 
 output "eks" {

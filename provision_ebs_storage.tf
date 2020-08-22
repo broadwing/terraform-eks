@@ -1,17 +1,19 @@
-# ebs-storage
-module "provision_ebs" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  template = file("${path.module}/cluster_configs/ebs-storage-class.tpl.yaml")
-
-  extra_command = "kubectl --namespace kube-system delete storageclasses.storage.k8s.io gpt2"
-
+data "kubectl_path_documents" "ebs_resources" {
+  pattern = "${path.module}/cluster_configs/ebs-storage-class.tpl.tpl.yaml"
   vars = {
     encrypted = var.ebs_default_encrypted
   }
+}
 
-  use_system_kubectl = var.use_system_kubectl
+resource "kubectl_manifest" "ebs_resources" {
+  count     = length(data.kubectl_path_documents.ebs_resources.documents)
+  force_new = true
 
-  module_depends_on = [module.wait_for_eks.command]
+  yaml_body = element(data.kubectl_path_documents.ebs_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
 }

@@ -1,48 +1,46 @@
-# Dashboard
-module "provision_dashboard" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.dashboard
-
-  template = file(
-    "${path.module}/cluster_configs/kubernetes-dashboard.tpl.yaml",
-  )
-
+data "kubectl_path_documents" "dashboard_resources" {
+  pattern = "${path.module}/cluster_configs/kubernetes-dashboard.tpl.yaml"
   vars = {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = [module.wait_for_eks.command]
 }
 
-module "provision_admin_service_account" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.dashboard
-
-  template = file(
-    "${path.module}/cluster_configs/eks-admin-service-account.tpl.yaml",
-  )
-
+data "kubectl_path_documents" "admin_service_account_resources" {
+  pattern = "${path.module}/cluster_configs/eks-admin-service-account.tpl.yaml"
   vars = {
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = [module.wait_for_eks.command]
 }
 
-data "external" "dashboard-token" {
-  count = var.get_dashboard_token == "true" && var.dashboard ? 1 : 0
+resource "kubectl_manifest" "dashboard_resources" {
+  count = var.dashboard ? length(data.kubectl_path_documents.dashboard_resources.documents) : 0
 
-  program = ["${path.module}/bin/get_dashboard_token.sh"]
+  yaml_body = element(data.kubectl_path_documents.dashboard_resources.documents, count.index)
 
-  query = {
-    kubeconfig       = local.kubeconfig_path
-    wait_for_account = module.provision_admin_service_account.apply[0].id
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
+}
+
+resource "kubectl_manifest" "admin_service_account_resources" {
+  count = var.dashboard ? length(data.kubectl_path_documents.admin_service_account_resources.documents) : 0
+
+  yaml_body = element(data.kubectl_path_documents.admin_service_account_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
+}
+
+
+data "kubernetes_secret" "dashboard_token" {
+  metadata {
+    name      = kubectl_manifest.admin_service_account_resources[2].name
+    namespace = "kube-system"
   }
+
+  depends_on = [kubectl_manifest.admin_service_account_resources]
 }

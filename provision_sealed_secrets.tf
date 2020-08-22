@@ -1,35 +1,36 @@
-# Seaeled Secrets
-module "provision_sealed_secrets_controller" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.sealed_secrets_controller
-
-  template = file(
-    "${path.module}/cluster_configs/sealed-secrets-controller.tpl.yaml",
-  )
-
+data "kubectl_path_documents" "sealed_secrets_controller_resources" {
+  pattern = "${path.module}/cluster_configs/sealed-secrets-controller.tpl.yaml"
   vars = {
     cni = var.remove_aws_vpc_cni ? "" : "aws"
   }
-
-  use_system_kubectl = var.use_system_kubectl
-
-  module_depends_on = [module.wait_for_eks.command]
 }
 
-module "provision_sealed_secrets_crd" {
-  source     = "./modules/kubectl-apply"
-  kubeconfig = local.kubeconfig_path
-
-  apply = var.sealed_secrets_controller
-
-  template = file("${path.module}/cluster_configs/sealed-secrets-crd.tpl.yaml")
-
+data "kubectl_path_documents" "sealed_secrets_crd_resources" {
+  pattern = "${path.module}/cluster_configs/sealed-secrets-crd.tpl.yaml"
   vars = {
   }
+}
 
-  use_system_kubectl = var.use_system_kubectl
+resource "kubectl_manifest" "sealed_secrets_controller_resources" {
+  count = var.sealed_secrets_controller ? length(data.kubectl_path_documents.sealed_secrets_controller_resources.documents) : 0
 
-  module_depends_on = [module.wait_for_eks.command]
+  yaml_body = element(data.kubectl_path_documents.sealed_secrets_controller_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
+}
+
+resource "kubectl_manifest" "sealed_secrets_crd_resources" {
+  count = var.sealed_secrets_controller ? length(data.kubectl_path_documents.sealed_secrets_crd_resources.documents) : 0
+
+  yaml_body = element(data.kubectl_path_documents.sealed_secrets_crd_resources.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
 }
