@@ -87,13 +87,12 @@ If you want to create a worker group that utilizes Spot instances you can do so 
 
 ```hcl
 node_groups = [
-    for subnet in module.vpc.private_subnets :
-    {
-      name          = "base-spot"
-      lifecycle     = "spot"
-      instance_type = "m5.xlarge"
-    }
-  ]
+  {
+    name          = "base-spot"
+    lifecycle     = "spot"
+    instance_type = "m5.xlarge"
+  }
+]
 ```
 
 This will create a new Launch Template backed ASG using Spot instances and append the `node.kubernetes.io/lifecycle=spot` label to these nodes.
