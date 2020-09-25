@@ -22,6 +22,8 @@ resource "kubectl_manifest" "flux_resources" {
 }
 
 resource "kubernetes_namespace" "flux" {
+  count = var.flux ? 1 : 0
+
   metadata {
     name = "flux"
   }
