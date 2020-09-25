@@ -226,3 +226,39 @@ variable "enable_irsa" {
   type        = bool
   default     = false
 }
+
+variable "flux" {
+  type        = bool
+  default     = false
+  description = "If Flux should be deployed"
+}
+
+variable "flux_git_user" {
+  type        = string
+  default     = "flux"
+  description = "The flux git-user"
+}
+
+variable "flux_git_url" {
+  type        = string
+  default     = null
+  description = "The flux git-url to track"
+}
+
+variable "flux_git_path" {
+  type        = string
+  default     = "namespaces,workloads"
+  description = "The flux git-path to use"
+}
+
+variable "flux_git_branch" {
+  type        = string
+  default     = "master"
+  description = "The flux git-branch to use"
+}
+
+variable "flux_manifest_generation" {
+  type        = bool
+  default     = false
+  description = "If flue manifest-generation should be true or false (for kustomize support)"
+}
