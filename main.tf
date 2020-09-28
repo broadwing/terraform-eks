@@ -8,96 +8,15 @@ locals {
     for mng in var.managed_node_groups :
     merge(var.managed_node_group_defaults, mng)
   ]
-}
 
-data "aws_caller_identity" "current" {
-}
-
-data "aws_partition" "current" {
-}
-
-data "aws_ami" "eks_worker" {
-  filter {
-    name   = "name"
-    values = ["amazon-eks-node-${var.cluster_version}-v*"]
-  }
-
-  most_recent = true
-
-  # Owner ID of AWS EKS team
-  owners = ["602401143452"]
-}
-
-data "aws_ami" "eks_gpu_worker" {
-  filter {
-    name   = "name"
-    values = ["amazon-eks-gpu-node-${var.cluster_version}-v*"]
-  }
-
-  most_recent = true
-
-  # Owner ID of AWS EKS team
-  owners = ["602401143452"]
-}
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
-}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-  version                = "~> 1.10"
-}
-
-provider "kubectl" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-}
-
-
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "12.2.0"
-
-  cluster_name    = var.name
-  cluster_version = var.cluster_version
-
-  vpc_id  = var.vpc_id
-  subnets = var.subnets
-
-  #We need to manage auth ourselves since we create the workers later their role wont be added
-  # manage_aws_auth = "true"
-  map_users    = var.map_users
-  map_roles    = var.map_roles
-  map_accounts = var.map_accounts
-
-  write_kubeconfig   = "true"
-  config_output_path = abspath("${path.root}/${var.name}.kubeconfig")
-
-  kubeconfig_aws_authenticator_env_variables = {
-    AWS_PROFILE = var.aws_profile
-  }
-
-  enable_irsa = var.enable_irsa
-
-  worker_additional_security_group_ids = var.nodes_additional_security_group_ids
-
-  # This will launch an autoscaling group with only On-Demand instances
-  worker_groups = [
+  defaulted_worker_groups = [
     for wg in local.defaulted_node_groups :
     {
+      lifecycle = wg.lifecycle
+
       # Worker group specific values
       name                 = wg.name
-      instance_type        = wg.instance_type
+      instance_type        = flatten([wg.instance_type])[0]
       asg_min_size         = wg.min_count
       asg_desired_capacity = wg.count
       asg_max_size         = wg.max_count
@@ -183,7 +102,110 @@ module "eks" {
         "GroupTerminatingInstances",
         "GroupTotalInstances",
       ]
+
+      # Spot specific vars (when relevant)
+      spot_instance_pools                      = wg.spot_instance_pools
+      on_demand_base_capacity                  = wg.on_demand_base_capacity
+      on_demand_percentage_above_base_capacity = wg.on_demand_percentage_above_base_capacity
+      override_instance_types                  = wg.override_instance_types == null ? flatten([wg.instance_type]) : wg.override_instance_types
     }
+  ]
+}
+
+data "aws_caller_identity" "current" {
+}
+
+data "aws_partition" "current" {
+}
+
+data "aws_ami" "eks_worker" {
+  filter {
+    name   = "name"
+    values = ["amazon-eks-node-${var.cluster_version}-v*"]
+  }
+
+  most_recent = true
+
+  # Owner ID of AWS EKS team
+  owners = ["602401143452"]
+}
+
+data "aws_ami" "eks_gpu_worker" {
+  filter {
+    name   = "name"
+    values = ["amazon-eks-gpu-node-${var.cluster_version}-v*"]
+  }
+
+  most_recent = true
+
+  # Owner ID of AWS EKS team
+  owners = ["602401143452"]
+}
+
+data "aws_eks_cluster" "cluster" {
+  name = module.eks.cluster_id
+}
+
+data "aws_eks_cluster_auth" "cluster" {
+  name = module.eks.cluster_id
+}
+
+provider "kubernetes" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+  version                = "~> 1.10"
+}
+
+provider "kubectl" {
+  host                   = data.aws_eks_cluster.cluster.endpoint
+  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
+  token                  = data.aws_eks_cluster_auth.cluster.token
+  load_config_file       = false
+}
+
+
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "12.2.0"
+
+  cluster_name    = var.name
+  cluster_version = var.cluster_version
+
+  vpc_id  = var.vpc_id
+  subnets = var.subnets
+
+  #We need to manage auth ourselves since we create the workers later their role wont be added
+  # manage_aws_auth = "true"
+  map_users    = var.map_users
+  map_roles    = var.map_roles
+  map_accounts = var.map_accounts
+
+  write_kubeconfig   = "true"
+  config_output_path = abspath("${path.root}/${var.name}.kubeconfig")
+
+  kubeconfig_aws_authenticator_env_variables = {
+    AWS_PROFILE = var.aws_profile
+  }
+
+  enable_irsa = var.enable_irsa
+
+  worker_additional_security_group_ids = var.nodes_additional_security_group_ids
+
+  # This will launch an autoscaling group with only On-Demand instances
+  worker_groups = [
+    for wg in local.defaulted_worker_groups : wg if wg.lifecycle != "spot"
+  ]
+
+  # This will launch an autoscaling group with Spot instances
+  worker_groups_launch_template = [
+    for wg in local.defaulted_worker_groups :
+    merge(wg, {
+      suspended_processes : ["AZRebalance"],
+      kubelet_extra_args : replace(wg.kubelet_extra_args, "--node-labels=", "--node-labels=node.kubernetes.io/lifecycle=spot,")
+    })
+    if wg.lifecycle == "spot"
   ]
 
   node_groups = [
