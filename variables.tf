@@ -155,28 +155,38 @@ variable "node_groups" {
 
 variable "node_group_defaults" {
   type = object({
-    name          = string
-    min_count     = number
-    count         = number
-    max_count     = number
-    instance_type = string
-    dedicated     = bool
-    autoscale     = bool
-    gpu           = bool
-    external_lb   = bool
-    subnets       = list(string)
+    name                                     = string
+    lifecycle                                = string
+    min_count                                = number
+    count                                    = number
+    max_count                                = number
+    instance_type                            = string
+    dedicated                                = bool
+    autoscale                                = bool
+    gpu                                      = bool
+    external_lb                              = bool
+    subnets                                  = list(string)
+    override_instance_types                  = list(string)
+    spot_instance_pools                      = number
+    on_demand_base_capacity                  = number
+    on_demand_percentage_above_base_capacity = number
   })
   default = {
-    name          = null        # Name of the node group
-    min_count     = 1           # Min count for ASG
-    count         = 2           # Initial desired count for ASG
-    max_count     = 2           # Max count for ASG
-    instance_type = "m5.xlarge" # Instance type
-    dedicated     = false       # If true taint will be applied to group to make it a dedicated node group.
-    autoscale     = true        # If cluster autoscaling should control desired count
-    gpu           = false       # If GPU instance types should be used
-    external_lb   = true        # If ALB External LB should use these nodes for attaching to target group
-    subnets       = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
+    name                                     = null        # Name of the node group
+    lifecycle                                = "ondemand"  # Lifecycle of node (ondemand or spot)
+    min_count                                = 1           # Min count for ASG
+    count                                    = 2           # Initial desired count for ASG
+    max_count                                = 2           # Max count for ASG
+    instance_type                            = "m5.xlarge" # Instance type
+    dedicated                                = false       # If true taint will be applied to group to make it a dedicated node group.
+    autoscale                                = true        # If cluster autoscaling should control desired count
+    gpu                                      = false       # If GPU instance types should be used
+    external_lb                              = true        # If ALB External LB should use these nodes for attaching to target group
+    subnets                                  = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
+    override_instance_types                  = null        # A list of override instance types for mixed ondemand/spot instances policy
+    spot_instance_pools                      = 10          # Number of Spot pools per availability zone to allocate capacity. EC2 Auto Scaling selects the cheapest Spot pools and evenly allocates Spot capacity across the number of Spot pools that you specify.
+    on_demand_base_capacity                  = 0           # Absolute minimum amount of desired capacity that must be fulfilled by on-demand instances
+    on_demand_percentage_above_base_capacity = 0           # Percentage split between on-demand and Spot instances above the base on-demand capacity
   }
 }
 
@@ -225,6 +235,42 @@ variable "enable_irsa" {
   description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
   type        = bool
   default     = false
+}
+
+variable "flux" {
+  type        = bool
+  default     = false
+  description = "If Flux should be deployed"
+}
+
+variable "flux_git_user" {
+  type        = string
+  default     = "flux"
+  description = "The flux git-user"
+}
+
+variable "flux_git_url" {
+  type        = string
+  default     = null
+  description = "The flux git-url to track"
+}
+
+variable "flux_git_path" {
+  type        = string
+  default     = "namespaces,workloads"
+  description = "The flux git-path to use"
+}
+
+variable "flux_git_branch" {
+  type        = string
+  default     = "master"
+  description = "The flux git-branch to use"
+}
+
+variable "flux_manifest_generation" {
+  type        = bool
+  default     = false
+  description = "If flue manifest-generation should be true or false (for kustomize support)"
 }
 
 variable "enable_ebs_csi" {

@@ -81,6 +81,22 @@ node_groups = [
 
 In this case one ASG will be created per AZ. All ASGs will have a launch config with the same "groupName" label. The cluster auto scaler can then scale each ASG and AZ individually. This is helpful when relying on EBS volume claims that could be tied to a specific AZ.
 
+### Spot Worker Groups
+
+If you want to create a worker group that utilizes Spot instances you can do so with a node_groups definition like:
+
+```hcl
+node_groups = [
+  {
+    name          = "base-spot"
+    lifecycle     = "spot"
+    instance_type = "m5.xlarge"
+  }
+]
+```
+
+This will create a new Launch Template backed ASG using Spot instances and append the `node.kubernetes.io/lifecycle=spot` label to these nodes.
+
 ## Dashboard
 
 After running you can access the dashboard by
