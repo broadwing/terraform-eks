@@ -226,3 +226,9 @@ variable "enable_irsa" {
   type        = bool
   default     = false
 }
+
+variable "enable_ebs_csi" {
+  description = "Enables EKS support for EBS CSI driver"
+  type        = bool
+  default     = false
+}
