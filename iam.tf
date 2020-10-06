@@ -71,3 +71,10 @@ data "aws_iam_policy_document" "worker_autoscaling" {
     }
   }
 }
+
+# CSI drivers
+resource "aws_iam_role_policy_attachment" "aws_csi_ebs" {
+  count = var.enable_ebs_csi ? 1 : 0
+  policy_arn = aws_iam_policy.amazon_ebs_csi_driver.arn
+  role       = module.eks.worker_iam_role_name
+}

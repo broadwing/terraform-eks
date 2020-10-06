@@ -5,3 +5,4 @@ terraform.tfstate
 .idea
 *.pyc
 .kitchen
+*.sw?

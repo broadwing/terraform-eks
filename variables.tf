@@ -278,3 +278,9 @@ variable "enable_ebs_csi" {
   type        = bool
   default     = false
 }
+
+variable "enable_efs_csi" {
+  description = "Enables EKS support for EFS CSI driver"
+  type        = bool
+  default     = false
+}
