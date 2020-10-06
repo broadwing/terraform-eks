@@ -53,6 +53,7 @@ module "eks" {
   external_dns_type = "<internal|external>" or "" for auto-detect (default)
 
   nodes_key_name = "eks"
+  nodes_source_security_group_ids = [module.vpc.default_security_group_id]
 
   node_groups = local.node_groups
 
