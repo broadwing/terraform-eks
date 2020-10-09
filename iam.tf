@@ -3,7 +3,7 @@ resource "aws_iam_role_policy" "eks_workers_albs" {
   name = "alb_manager"
   role = module.eks.worker_iam_role_name
 
-  policy = file("${path.module}/iam/albs.json")
+  policy = var.alb_ingress_controller_v2 ? file("${path.module}/iam/albs_v2.json") : file("${path.module}/iam/albs.json")
 }
 
 resource "aws_iam_role_policy" "eks_workers_route53" {
@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "worker_autoscaling" {
 
 # CSI drivers
 resource "aws_iam_role_policy_attachment" "aws_csi_ebs" {
-  count = var.enable_ebs_csi ? 1 : 0
+  count      = var.enable_ebs_csi ? 1 : 0
   policy_arn = aws_iam_policy.amazon_ebs_csi_driver.arn
   role       = module.eks.worker_iam_role_name
 }

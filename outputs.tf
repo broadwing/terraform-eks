@@ -3,7 +3,7 @@ output "dashboard_token" {
 }
 
 output "flux_deploy_key" {
-  value =  var.flux ? tls_private_key.flux_deploy_key[0].public_key_openssh  : null
+  value = var.flux ? tls_private_key.flux_deploy_key[0].public_key_openssh : null
 }
 
 output "eks" {

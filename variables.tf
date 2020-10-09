@@ -143,6 +143,18 @@ variable "alb_ingress_controller_image" {
   default     = "docker.io/amazon/aws-alb-ingress-controller:v1.1.7"
 }
 
+variable "alb_ingress_controller_image_v2" {
+  type        = string
+  description = "aws-alb-ingress-controller container version to use"
+  default     = "amazon/aws-alb-ingress-controller:v2.0.0-rc2"
+}
+
+variable "alb_ingress_controller_v2" {
+  type        = bool
+  description = "If true, will use the new v2 aws-alb-ingress controller configuration"
+  default     = false
+}
+
 variable "sealed_secrets_controller" {
   description = "Whether or not to install the sealed secrests controller"
   default     = "true"
