@@ -76,6 +76,11 @@ variable "external_dns_type" {
   default     = ""
 }
 
+variable "external_policy_mode" {
+  description = "The External DNS policy mode to pass to External DNS --policy option"
+  default     = "upsert-only"
+}
+
 variable "allow_ssh" {
   description = "If SSH should be allowed into the worker nodes security group"
   default     = "true"
