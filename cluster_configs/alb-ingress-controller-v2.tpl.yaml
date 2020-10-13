@@ -483,7 +483,6 @@ spec:
       containers:
       - args:
         - --cluster-name=${cluster_name}
-        - --alb-name-prefix="${alb_prefix}"
         image: ${alb_image}
         name: controller
         ports:
