@@ -1,3 +1,4 @@
+# Original file downloaded from: https://raw.githubusercontent.com/kubernetes-sigs/aws-alb-ingress-controller/v2_ga/config/samples/install_v2_0_0_rc3.yaml
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
@@ -497,9 +498,9 @@ spec:
     spec:
       containers:
         - args:
-            - --cluster-name=${cluster_name}
+            - --cluster-name=your-cluster-name
             - --ingress-class=alb
-          image: ${alb_image}
+          image: amazon/aws-alb-ingress-controller:v2.0.0-rc3
           name: controller
           ports:
             - containerPort: 9443
