@@ -1,4 +1,5 @@
 # allow workers to manage ALBs and Route53 records
+# Policy is from: https://github.com/kubernetes-sigs/aws-alb-ingress-controller/blob/v2_ga/docs/install/iam_policy.json
 resource "aws_iam_role_policy" "eks_workers_albs" {
   name = "alb_manager"
   role = module.eks.worker_iam_role_name
