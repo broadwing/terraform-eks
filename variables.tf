@@ -155,6 +155,12 @@ variable "alb_ingress_controller_v2" {
   default     = false
 }
 
+variable "cert_manager_installed" {
+  type        = bool
+  description = "Set to true if cert-manager is installed"
+  default     = false
+}
+
 variable "sealed_secrets_controller" {
   description = "Whether or not to install the sealed secrests controller"
   default     = "true"

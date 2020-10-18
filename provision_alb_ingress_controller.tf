@@ -57,3 +57,25 @@ resource "kubectl_manifest" "alb_ingress_controller_resources_v2" {
   # Forces waiting for cluster to be available
   depends_on = [module.eks.cluster_id]
 }
+
+data "kubectl_path_documents" "alb_ingress_controller_resources_v2_webhookcert" {
+  pattern = "${path.module}/cluster_configs/alb-ingress-controller-v2-cert-manager.tpl.yaml"
+
+  vars = {
+    cluster_name = var.environment
+    alb_prefix   = var.alb_prefix
+    alb_image    = var.alb_ingress_controller_image_v2
+  }
+}
+
+resource "kubectl_manifest" "alb_ingress_controller_resources_v2_webhookcert" {
+  count = var.alb_ingress_controller && var.alb_ingress_controller_v2  && var.cert_manager_installed ? length(data.kubectl_path_documents.alb_ingress_controller_resources_v2_webhookcert.documents) : 0
+
+  yaml_body = element(data.kubectl_path_documents.alb_ingress_controller_resources_v2_webhookcert.documents, count.index)
+
+  # We wont have any nodes yet so can't wait for rollout
+  wait_for_rollout = false
+
+  # Forces waiting for cluster to be available
+  depends_on = [module.eks.cluster_id]
+}
