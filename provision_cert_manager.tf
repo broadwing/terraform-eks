@@ -1,10 +1,7 @@
+# If this hangs and you have partial installs, delete existing CRDs
 data "kubectl_path_documents" "cert_manager_crd_resources" {
   pattern = "${path.module}/cert-manager/crd/*.yaml"
   vars = {
-    namespace     = var.cert_manager_namespace
-    release_name  = var.cert_manager_release_name
-    cni           = var.cert_manager_cni
-    image_version = var.cert_manager_image_version
   }
 }
 
