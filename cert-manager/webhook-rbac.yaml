@@ -1,0 +1,43 @@
+---
+# Source: cert-manager/templates/webhook-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${release_name}-webhook:dynamic-serving
+  namespace: ${namespace}
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: ${release_name}
+    app.kubernetes.io/component: "webhook"
+rules:
+- apiGroups: [""]
+  resources: ["secrets"]
+  resourceNames:
+  - '${release_name}-webhook-ca'
+  verbs: ["get", "list", "watch", "update"]
+# It's not possible to grant CREATE permission on a single resourceName.
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["create"]
+---
+# Source: cert-manager/templates/webhook-rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${release_name}-webhook:dynamic-serving
+  namespace: ${namespace}
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: ${release_name}
+    app.kubernetes.io/component: "webhook"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ${release_name}-webhook:dynamic-serving
+subjects:
+- apiGroup: ""
+  kind: ServiceAccount
+  name: ${release_name}-webhook
+  namespace: ${namespace}

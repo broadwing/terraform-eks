@@ -1,0 +1,46 @@
+---
+# Source: cert-manager/templates/webhook-validating-webhook.yaml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: ${release_name}-webhook
+  labels:
+    app: webhook
+    app.kubernetes.io/name: webhook
+    app.kubernetes.io/instance: ${release_name}
+    app.kubernetes.io/component: "webhook"
+  annotations:
+    cert-manager.io/inject-ca-from-secret: "${namespace}/${release_name}-webhook-ca"
+    cni: ${cni}
+webhooks:
+  - name: webhook.cert-manager.io
+    namespaceSelector:
+      matchExpressions:
+      - key: "cert-manager.io/disable-validation"
+        operator: "NotIn"
+        values:
+        - "true"
+      - key: "name"
+        operator: "NotIn"
+        values:
+        - ${namespace}
+    rules:
+      - apiGroups:
+          - "cert-manager.io"
+          - "acme.cert-manager.io"
+        apiVersions:
+          - "*"
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - "*/*"
+    admissionReviewVersions: ["v1", "v1beta1"]
+    failurePolicy: Fail
+    # Only include 'sideEffects' field in Kubernetes 1.12+
+    sideEffects: None
+    clientConfig:
+      service:
+        name: ${release_name}-webhook
+        namespace: ${namespace}
+        path: /validate

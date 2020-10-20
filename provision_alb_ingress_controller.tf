@@ -69,7 +69,7 @@ data "kubectl_path_documents" "alb_ingress_controller_resources_v2_webhookcert" 
 }
 
 resource "kubectl_manifest" "alb_ingress_controller_resources_v2_webhookcert" {
-  count = var.alb_ingress_controller && var.alb_ingress_controller_v2  && var.cert_manager_installed ? length(data.kubectl_path_documents.alb_ingress_controller_resources_v2_webhookcert.documents) : 0
+  count = var.alb_ingress_controller && var.alb_ingress_controller_v2 ? length(data.kubectl_path_documents.alb_ingress_controller_resources_v2_webhookcert.documents) : 0
 
   yaml_body = element(data.kubectl_path_documents.alb_ingress_controller_resources_v2_webhookcert.documents, count.index)
 

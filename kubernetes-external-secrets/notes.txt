@@ -1,0 +1,5 @@
+These files were generated with:
+
+helm template --output-dir ./output_dir ./charts/kubernetes-external-secrets/
+
+See: https://github.com/godaddy/kubernetes-external-secrets/tree/6.0.0

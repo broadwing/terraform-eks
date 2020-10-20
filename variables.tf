@@ -155,10 +155,56 @@ variable "alb_ingress_controller_v2" {
   default     = false
 }
 
-variable "cert_manager_installed" {
+variable "install_cert_manager" {
   type        = bool
-  description = "Set to true if cert-manager is installed"
+  description = "Set to true to install cert-manager"
   default     = false
+}
+
+variable "cert_manager_release_name" {
+  type    = string
+  default = "cert-manager"
+}
+
+variable "cert_manager_namespace" {
+  type    = string
+  default = "cert-manager"
+}
+
+variable "cert_manager_cni" {
+  type    = string
+  default = "aws"
+}
+
+variable "cert_manager_image_version" {
+  type    = string
+  default = "v1.0.3"
+}
+
+variable "install_external_secrets" {
+  type        = bool
+  description = "Set to true to install kubernetes-external-secrets"
+  default     = false
+}
+
+variable "external_secrets_namespace" {
+  type    = string
+  default = "kube-system"
+}
+
+variable "external_secrets_release_name" {
+  type    = string
+  default = "kubernetes-external-secrets"
+}
+
+variable "external_secrets_aws_default_region" {
+  type    = string
+  default = "us-east-1"
+}
+
+variable "external_secrets_aws_region" {
+  type    = string
+  default = "us-east-1"
 }
 
 variable "sealed_secrets_controller" {

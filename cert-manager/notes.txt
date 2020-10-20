@@ -1,0 +1,3 @@
+These files were generated with:
+
+helm template --output-dir ./output_dir ./charts/cert-manager

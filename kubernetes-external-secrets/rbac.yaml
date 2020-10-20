@@ -1,0 +1,63 @@
+---
+# Source: kubernetes-external-secrets/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  name: ${release_name}
+  labels:
+    app.kubernetes.io/name: kubernetes-external-secrets
+    app.kubernetes.io/instance: ${release_name}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create", "update"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    resourceNames: ["externalsecrets.kubernetes-client.io"]
+    verbs: ["get", "update"]
+  - apiGroups: ["kubernetes-client.io"]
+    resources: ["externalsecrets"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["kubernetes-client.io"]
+    resources: ["externalsecrets/status"]
+    verbs: ["get", "update"]
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions"]
+    verbs: ["create"]
+---
+# Source: kubernetes-external-secrets/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: ${release_name}
+  labels:
+    app.kubernetes.io/name: kubernetes-external-secrets
+    app.kubernetes.io/instance: ${release_name}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ${release_name}
+subjects:
+  - name: ${release_name}
+    namespace: ${namespace}
+    kind: ServiceAccount
+---
+# Source: kubernetes-external-secrets/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRoleBinding
+metadata:
+  name: ${release_name}-auth
+  labels:
+    app.kubernetes.io/name: kubernetes-external-secrets
+    app.kubernetes.io/instance: ${release_name}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+- name: ${release_name}
+  namespace: ${namespace}
+  kind: ServiceAccount
