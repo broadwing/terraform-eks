@@ -11,7 +11,6 @@ metadata:
     app.kubernetes.io/component: "webhook"
   annotations:
     cert-manager.io/inject-ca-from-secret: "${namespace}/${release_name}-webhook-ca"
-    cni: ${cni}
 webhooks:
   - name: webhook.cert-manager.io
     rules:

@@ -205,30 +205,15 @@ metadata:
 rules:
   - apiGroups:
       - ""
+    resourceNames:
+      - aws-load-balancer-controller-leader
     resources:
       - configmaps
     verbs:
-      - get
-      - list
-      - watch
       - create
-      - update
-      - patch
-      - delete
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps/status
-    verbs:
       - get
       - update
       - patch
-  - apiGroups:
-      - ""
-    resources:
-      - events
-    verbs:
-      - create
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -252,12 +237,7 @@ rules:
       - events
     verbs:
       - create
-      - delete
-      - get
-      - list
       - patch
-      - update
-      - watch
   - apiGroups:
       - ""
     resources:
@@ -281,15 +261,12 @@ rules:
     verbs:
       - get
       - list
-      - patch
-      - update
       - watch
   - apiGroups:
       - ""
     resources:
       - pods/status
     verbs:
-      - get
       - patch
       - update
   - apiGroups:
@@ -315,7 +292,6 @@ rules:
     resources:
       - services/status
     verbs:
-      - get
       - patch
       - update
   - apiGroups:
@@ -335,7 +311,6 @@ rules:
     resources:
       - targetgroupbindings/status
     verbs:
-      - get
       - patch
       - update
   - apiGroups:
@@ -353,7 +328,6 @@ rules:
     resources:
       - ingresses/status
     verbs:
-      - get
       - patch
       - update
   - apiGroups:
@@ -371,7 +345,6 @@ rules:
     resources:
       - ingresses/status
     verbs:
-      - get
       - patch
       - update
 ---
@@ -446,6 +419,14 @@ spec:
             - --cluster-name=${cluster_name}
             - --ingress-class=alb
           image: ${alb_image}
+          livenessProbe:
+            failureThreshold: 2
+            httpGet:
+              path: /healthz
+              port: 61779
+              scheme: HTTP
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
           name: controller
           ports:
             - containerPort: 9443
@@ -453,8 +434,8 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: 100m
-              memory: 2000Mi
+              cpu: 200m
+              memory: 500Mi
             requests:
               cpu: 100m
               memory: 200Mi

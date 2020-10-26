@@ -77,5 +77,5 @@ resource "kubectl_manifest" "alb_ingress_controller_resources_v2_webhookcert" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id]
+  depends_on = [module.eks.cluster_id, kubectl_manifest.cert_manager_resources]
 }

@@ -1,4 +1,8 @@
 # If this hangs and you have partial installs, delete existing CRDs
+#
+# e.g. kubectl delete -f https://github.com/jetstack/cert-manager/releases/download/v1.0.3/cert-manager.crds.yaml
+# kubectl delete MutatingWebhookConfiguration/cert-manager-webhook
+# kubectl delete ValidatingWebhookConfiguration/cert-manager-webhook
 data "kubectl_path_documents" "cert_manager_crd_resources" {
   pattern = "${path.module}/cert-manager/crd/*.yaml"
   vars = {

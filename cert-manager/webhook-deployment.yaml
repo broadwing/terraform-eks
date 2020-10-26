@@ -24,15 +24,21 @@ spec:
         app.kubernetes.io/name: webhook
         app.kubernetes.io/instance: ${release_name}
         app.kubernetes.io/component: "webhook"
+      annotations:
+        cni: ${cni}
     spec:
       serviceAccountName: ${release_name}-webhook
+      # Note: Needed for EKS
+      #hostNetwork: true
       containers:
         - name: cert-manager
           image: "quay.io/jetstack/cert-manager-webhook:${image_version}"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
+          # Note: Change port from 10250 for KES hostNetwork
           - --secure-port=10250
+          #- --secure-port=10254
           - --dynamic-serving-ca-secret-namespace=$(POD_NAMESPACE)
           - --dynamic-serving-ca-secret-name=${release_name}-webhook-ca
           - --dynamic-serving-dns-names=${release_name}-webhook,${release_name}-webhook.${namespace},${release_name}-webhook.${namespace}.svc

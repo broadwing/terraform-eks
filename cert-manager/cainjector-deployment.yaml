@@ -24,6 +24,8 @@ spec:
         app.kubernetes.io/name: cainjector
         app.kubernetes.io/instance: ${release_name}
         app.kubernetes.io/component: "cainjector"
+      annotations:
+        cni: ${cni}
     spec:
       serviceAccountName: ${release_name}-cainjector
       containers:
