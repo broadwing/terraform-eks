@@ -29,6 +29,7 @@ locals {
                                 --eviction-soft=\"memory.available<10%\"
                                 --eviction-soft-grace-period=\"memory.available=5m\"
                                 --system-reserved=\"memory=500Mi\"
+                                ${wg.kubelet_extra_args}
                               EOT
       , "\n", " ")
 

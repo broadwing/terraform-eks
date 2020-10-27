@@ -170,6 +170,7 @@ variable "node_group_defaults" {
     spot_instance_pools                      = number
     on_demand_base_capacity                  = number
     on_demand_percentage_above_base_capacity = number
+    kubelet_extra_args                       = string
   })
   default = {
     name                                     = null        # Name of the node group
@@ -187,6 +188,7 @@ variable "node_group_defaults" {
     spot_instance_pools                      = 10          # Number of Spot pools per availability zone to allocate capacity. EC2 Auto Scaling selects the cheapest Spot pools and evenly allocates Spot capacity across the number of Spot pools that you specify.
     on_demand_base_capacity                  = 0           # Absolute minimum amount of desired capacity that must be fulfilled by on-demand instances
     on_demand_percentage_above_base_capacity = 0           # Percentage split between on-demand and Spot instances above the base on-demand capacity
+    kubelet_extra_args                       = ""          # This string is passed directly to kubelet if set. Useful for adding labels or taints.
   }
 }
 
