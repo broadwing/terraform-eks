@@ -43,6 +43,7 @@ data "kubectl_path_documents" "alb_ingress_controller_resources_v2" {
     cluster_name = var.environment
     alb_prefix   = var.alb_prefix
     alb_image    = var.alb_ingress_controller_image_v2
+    cni          = var.alb_ingress_cni
   }
 }
 

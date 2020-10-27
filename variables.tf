@@ -155,6 +155,11 @@ variable "alb_ingress_controller_v2" {
   default     = false
 }
 
+variable "alb_ingress_cni" {
+  type    = string
+  default = "aws"
+}
+
 variable "install_cert_manager" {
   type        = bool
   description = "Set to true to install cert-manager"
