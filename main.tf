@@ -222,7 +222,7 @@ module "eks" {
 
       additional_tags = merge({
         "name"                                                    = "${var.name}-${mng.name}-eks-managed",
-        "groupName"                                               = mng.name,
+        "k8s.io/cluster-autoscaler/node-template/label/groupName" = mng.name,
         "alpha.service-controller.kubernetes.io/exclude-balancer" = mng.external_lb ? "false" : "true",
         "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
         }, mng.dedicated ? {
