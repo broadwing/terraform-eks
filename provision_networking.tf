@@ -9,14 +9,14 @@ data "kubectl_path_documents" "genie_resources" {
 }
 
 data "kubectl_path_documents" "calico_resources" {
-  pattern = "${path.module}/cluster_configs/calico.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/calico-onprem-3.16.5.tpl.yaml"
   vars = {
     ip_autodetection = var.remove_aws_vpc_cni ? "first-found" : "interface=eth0"
   }
 }
 
 data "kubectl_path_documents" "aws_cni_resources" {
-  pattern = "${path.module}/cluster_configs/aws-node.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/amazon-k8-cni-1.7.5.tpl.yaml"
   vars = {
     externalsnat     = var.calico_cni ? "true" : "false"
     excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
