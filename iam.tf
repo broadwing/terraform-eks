@@ -79,3 +79,16 @@ resource "aws_iam_role_policy_attachment" "aws_csi_ebs" {
   policy_arn = aws_iam_policy.amazon_ebs_csi_driver.arn
   role       = module.eks.worker_iam_role_name
 }
+
+# OIDC provider linked to EKS cluster for IAM role association
+data "tls_certificate" "oidc_cert_thumbprint" {
+  url = module.eks.cluster_oidc_issuer_url
+}
+
+resource "aws_iam_openid_connect_provider" "oidc_provider" {
+  url = module.eks.cluster_oidc_issuer_url
+
+  client_id_list = ["sts.amazonaws.com"]
+
+  thumbprint_list = [data.tls_certificate.oidc_cert_thumbprint.certificates.0.sha1_fingerprint]
+}
