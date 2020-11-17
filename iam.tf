@@ -81,6 +81,7 @@ resource "aws_iam_role_policy_attachment" "aws_csi_ebs" {
 }
 
 # OIDC provider linked to EKS cluster for IAM role association
+# TODO: no current way to ignore ID changing here
 data "tls_certificate" "oidc_cert_thumbprint" {
   url = module.eks.cluster_oidc_issuer_url
 }
