@@ -1,5 +1,5 @@
 data "kubectl_path_documents" "ebs_resources" {
-  pattern = "${path.module}/cluster_configs/ebs-storage-class.tpl.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/ebs-storage-class.tpl.yaml"
   vars = {
     encrypted   = var.ebs_default_encrypted
     provisioner = var.ebs_default_provisioner
