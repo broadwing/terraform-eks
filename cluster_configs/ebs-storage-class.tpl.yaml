@@ -3,12 +3,12 @@ kind: StorageClass
 metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
-  name: gpt2
+  name: gp2
 parameters:
   fsType: ext4
-  type: gpt2
+  type: gp2
   encrypted: "${encrypted}"
 volumeBindingMode: WaitForFirstConsumer
 provisioner: "${provisioner}"
-reclaimPolicy: Retain
+reclaimPolicy: Delete
 volumeBindingMode: Immediate
