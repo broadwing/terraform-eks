@@ -91,6 +91,7 @@ locals {
       pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", { pre_userdata = var.pre_userdata })
       ami_id               = var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id
       termination_policies = ["OldestLaunchConfiguration", "Default"]
+      root_encrypted       = wg.encrypted == null ? false : wg.encrypted
 
       enabled_metrics = [
         "GroupDesiredCapacity",
