@@ -9,6 +9,6 @@ parameters:
   type: gpt2
   encrypted: "${encrypted}"
 volumeBindingMode: WaitForFirstConsumer
-provisioner: kubernetes.io/aws-ebs
+provisioner: "${provisioner}"
 reclaimPolicy: Retain
 volumeBindingMode: Immediate

@@ -133,6 +133,11 @@ variable "ebs_default_encrypted" {
   default     = "true"
 }
 
+variable "ebs_default_provisioner" {
+  description = "Which provisioner should be used for the StroageClass"
+  default     = "kubernetes.io/aws-ebs"
+}
+
 variable "alb_prefix" {
   description = "A Prefix to add to any ALBs or Target Groups the ALB Ingress Controller Creates"
   default     = ""
