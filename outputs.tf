@@ -9,3 +9,7 @@ output "flux_deploy_key" {
 output "eks" {
   value = module.eks
 }
+
+output "oidc_provider" {
+  value = aws_iam_openid_connect_provider.oidc_provider
+}
