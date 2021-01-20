@@ -14,7 +14,7 @@ data "kubectl_path_documents" "alb_ingress_controller_resources" {
 }
 
 resource "kubectl_manifest" "alb_ingress_controller_role_resources" {
-  count = var.alb_ingress_controller && ! var.alb_ingress_controller_v2 ? length(data.kubectl_path_documents.alb_ingress_controller_role_resources.documents) : 0
+  count = var.alb_ingress_controller && !var.alb_ingress_controller_v2 ? length(data.kubectl_path_documents.alb_ingress_controller_role_resources.documents) : 0
 
   yaml_body = element(data.kubectl_path_documents.alb_ingress_controller_role_resources.documents, count.index)
 
@@ -26,7 +26,7 @@ resource "kubectl_manifest" "alb_ingress_controller_role_resources" {
 }
 
 resource "kubectl_manifest" "alb_ingress_controller_resources" {
-  count = var.alb_ingress_controller && ! var.alb_ingress_controller_v2 ? length(data.kubectl_path_documents.alb_ingress_controller_resources.documents) : 0
+  count = var.alb_ingress_controller && !var.alb_ingress_controller_v2 ? length(data.kubectl_path_documents.alb_ingress_controller_resources.documents) : 0
 
   yaml_body = element(data.kubectl_path_documents.alb_ingress_controller_resources.documents, count.index)
 

@@ -1,7 +1,8 @@
 data "kubectl_path_documents" "metrics_server_resources" {
   pattern = "${path.module}/cluster_configs/metrics-server.tpl.yaml"
   vars = {
-    cni = var.remove_aws_vpc_cni ? "" : "aws"
+    cni                 = var.remove_aws_vpc_cni ? "" : "aws"
+    metrics_server_args = join(":::", concat(var.metrics_server_args, var.metrics_server_extra_args))
   }
 }
 

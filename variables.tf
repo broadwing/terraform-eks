@@ -65,6 +65,18 @@ variable "metrics_server" {
   default     = "true"
 }
 
+variable "metrics_server_args" {
+  description = "Arguments for metrics-server"
+  type        = list(string)
+  default     = ["--cert-dir=/tmp", "--secure-port=4443"]
+}
+
+variable "metrics_server_extra_args" {
+  description = "Arguments to append to the metrics-server command line"
+  type        = list(string)
+  default     = []
+}
+
 variable "external_dns_domain_filters" {
   description = "Domains to pass in to External DNS --domain-filter option"
   default     = []
@@ -266,7 +278,7 @@ variable "node_group_defaults" {
   }
 }
 
-variable managed_node_groups {
+variable "managed_node_groups" {
   type        = list(any)
   description = "The Managed Node groups to create. See `node_group_defaults` for possible options"
   default     = []

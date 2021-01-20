@@ -88,8 +88,9 @@ spec:
         image: k8s.gcr.io/metrics-server/metrics-server:v0.3.7
         imagePullPolicy: IfNotPresent
         args:
-          - --cert-dir=/tmp
-          - --secure-port=4443
+%{ for arg in split(":::", metrics_server_args) ~}
+          - ${arg}
+%{ endfor ~}
         ports:
         - name: main-port
           containerPort: 4443
