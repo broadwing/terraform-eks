@@ -89,7 +89,7 @@ locals {
       # Vars for all worker groups
       key_name             = var.nodes_key_name
       pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", { pre_userdata = var.pre_userdata })
-      ami_id               = var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id
+      ami_id               = wg.ami_id != "" ? wg.ami_id : (var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id)
       termination_policies = ["OldestLaunchConfiguration", "Default"]
       root_encrypted       = wg.encrypted == null ? false : wg.encrypted
 
@@ -168,8 +168,9 @@ provider "kubectl" {
 
 
 module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "12.2.0"
+  source = "terraform-aws-modules/eks/aws"
+  #version = "12.2.0"
+  version = "13.2.0"
 
   cluster_name    = var.name
   cluster_version = var.cluster_version

@@ -262,6 +262,7 @@ variable "node_group_defaults" {
     on_demand_base_capacity                  = number
     on_demand_percentage_above_base_capacity = number
     encrypted                                = bool
+    ami_id                                   = string
   })
   default = {
     name                                     = null        # Name of the node group
@@ -280,6 +281,7 @@ variable "node_group_defaults" {
     on_demand_base_capacity                  = 0           # Absolute minimum amount of desired capacity that must be fulfilled by on-demand instances
     on_demand_percentage_above_base_capacity = 0           # Percentage split between on-demand and Spot instances above the base on-demand capacity
     encrypted                                = false       # If worker root disks should be encrypted or not
+    ami_id                                   = ""
   }
 }
 
