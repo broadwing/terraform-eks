@@ -219,6 +219,11 @@ variable "external_secrets_release_name" {
   default = "kubernetes-external-secrets"
 }
 
+variable "default_region" {
+  type    = string
+  default = "us-east-1"
+}
+
 variable "external_secrets_aws_default_region" {
   type    = string
   default = "us-east-1"

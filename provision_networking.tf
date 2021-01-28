@@ -24,10 +24,19 @@ data "kubectl_path_documents" "aws_cni_resources" {
   }
 }
 
+data "kubernetes_service" "kube_dns" {
+  metadata {
+    name      = "kube-dns"
+    namespace = "kube-system"
+  }
+}
+
 data "kubectl_path_documents" "k8s_dns_resources" {
   pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
   vars = {
-    cni = var.remove_aws_vpc_cni ? "" : "aws"
+    cni            = var.remove_aws_vpc_cni ? "" : "aws"
+    region         = var.default_region
+    dns_cluster_ip = data.kubernetes_service.kube_dns.spec.0.cluster_ip
   }
 }
 
