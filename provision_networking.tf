@@ -16,7 +16,7 @@ data "kubectl_path_documents" "calico_resources" {
 }
 
 data "kubectl_path_documents" "aws_cni_resources" {
-  pattern = "${path.module}/cluster_configs/amazon-k8-cni-1.7.5.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/amazon-k8-cni-1.7.9.tpl.yaml"
   vars = {
     externalsnat     = var.calico_cni ? "true" : "false"
     excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
