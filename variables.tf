@@ -163,7 +163,7 @@ variable "alb_ingress_controller_image" {
 variable "alb_ingress_controller_image_v2" {
   type        = string
   description = "aws-alb-ingress-controller container version to use"
-  default     = "amazon/aws-alb-ingress-controller:v2.0.0"
+  default     = "amazon/aws-alb-ingress-controller:v2.1.3"
 }
 
 variable "alb_ingress_controller_v2" {

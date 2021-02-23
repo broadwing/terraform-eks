@@ -14,6 +14,8 @@
                 "ec2:DescribeInstances",
                 "ec2:DescribeNetworkInterfaces",
                 "ec2:DescribeTags",
+								"ec2:GetCoipPoolUsage",
+								"ec2:DescribeCoipPools",
                 "elasticloadbalancing:DescribeLoadBalancers",
                 "elasticloadbalancing:DescribeLoadBalancerAttributes",
                 "elasticloadbalancing:DescribeListeners",
@@ -138,8 +140,9 @@
                 "elasticloadbalancing:RemoveTags"
             ],
             "Resource": [
-                "arn:aws:elasticloadbalancing:*:*:loadbalancer/*",
-                "arn:aws:elasticloadbalancing:*:*:targetgroup/*"
+							"arn:aws:elasticloadbalancing:*:*:targetgroup/*/*",
+							"arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*",
+							"arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*"
             ],
             "Condition": {
                 "Null": {
@@ -158,9 +161,7 @@
                 "elasticloadbalancing:DeleteLoadBalancer",
                 "elasticloadbalancing:ModifyTargetGroup",
                 "elasticloadbalancing:ModifyTargetGroupAttributes",
-                "elasticloadbalancing:RegisterTargets",
-                "elasticloadbalancing:DeregisterTargets",
-                "elasticloadbalancing:DeleteTargetGroup"
+								"elasticloadbalancing:DeleteTargetGroup"
             ],
             "Resource": "*",
             "Condition": {
@@ -172,13 +173,21 @@
         {
             "Effect": "Allow",
             "Action": [
-                "elasticloadbalancing:SetWebAcl",
-                "elasticloadbalancing:ModifyListener",
-                "elasticloadbalancing:AddListenerCertificates",
-                "elasticloadbalancing:RemoveListenerCertificates",
-                "elasticloadbalancing:ModifyRule"
+							"elasticloadbalancing:RegisterTargets",
+							"elasticloadbalancing:DeregisterTargets"
             ],
-            "Resource": "*"
-        }
-    ]
+						"Resource": "arn:aws:elasticloadbalancing:*:*:targetgroup/*/*"
+				},
+				{
+					"Effect": "Allow",
+					"Action": [
+						"elasticloadbalancing:SetWebAcl",
+						"elasticloadbalancing:ModifyListener",
+						"elasticloadbalancing:AddListenerCertificates",
+						"elasticloadbalancing:RemoveListenerCertificates",
+						"elasticloadbalancing:ModifyRule"
+					],
+					"Resource": "*"
+				}
+		]
 }

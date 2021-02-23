@@ -29,15 +29,30 @@ data "kubernetes_service" "kube_dns" {
     name      = "kube-dns"
     namespace = "kube-system"
   }
+
+  depends_on = [module.eks.cluster_id]
+}
+
+# A dummy group of documents so count can be evaluated
+# even though template values are not yet known
+data "kubectl_path_documents" "k8s_dns_resources_count" {
+  pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
+  disable_template = true
 }
 
 data "kubectl_path_documents" "k8s_dns_resources" {
   pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
+
   vars = {
     cni            = var.remove_aws_vpc_cni ? "" : "aws"
     region         = var.default_region
     dns_cluster_ip = data.kubernetes_service.kube_dns.spec.0.cluster_ip
   }
+
+  depends_on = [
+    module.eks.cluster_id,
+    data.kubernetes_service.kube_dns,
+  ]
 }
 
 resource "kubectl_manifest" "genie_resources" {
@@ -84,7 +99,7 @@ resource "kubectl_manifest" "aws_cni_resources" {
 }
 
 resource "kubectl_manifest" "k8s_dns_resources" {
-  count     = var.genie_cni ? length(data.kubectl_path_documents.k8s_dns_resources.documents) : 0
+  count     = var.genie_cni ? length(data.kubectl_path_documents.k8s_dns_resources_count.documents) : 0
   force_new = true
 
   yaml_body = element(data.kubectl_path_documents.k8s_dns_resources.documents, count.index)
@@ -95,6 +110,6 @@ resource "kubectl_manifest" "k8s_dns_resources" {
   depends_on = [
     # Forces waiting for cluster to be available
     module.eks.cluster_id,
-    kubectl_manifest.genie_resources
+    data.kubectl_path_documents.k8s_dns_resources,
   ]
 }

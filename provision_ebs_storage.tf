@@ -7,7 +7,7 @@ data "kubectl_path_documents" "ebs_resources" {
 }
 
 resource "kubectl_manifest" "ebs_resources" {
-  count     = length(data.kubectl_path_documents.ebs_resources.documents)
+  count     = var.enable_ebs_csi ? length(data.kubectl_path_documents.ebs_resources.documents) : 0
   force_new = true
 
   yaml_body = element(data.kubectl_path_documents.ebs_resources.documents, count.index)
