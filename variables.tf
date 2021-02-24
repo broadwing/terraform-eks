@@ -379,3 +379,8 @@ variable "enable_efs_csi" {
   type        = bool
   default     = false
 }
+
+variable "enable_coredns" {
+  type        = bool
+  default     = true
+}

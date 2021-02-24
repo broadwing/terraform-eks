@@ -36,11 +36,13 @@ data "kubernetes_service" "kube_dns" {
 # A dummy group of documents so count can be evaluated
 # even though template values are not yet known
 data "kubectl_path_documents" "k8s_dns_resources_count" {
+  count = var.enable_coredns ? 1 : 0
   pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
   disable_template = true
 }
 
 data "kubectl_path_documents" "k8s_dns_resources" {
+  count = var.enable_coredns ? 1 : 0
   pattern = "${path.module}/cluster_configs/dns.tpl.yaml"
 
   vars = {
@@ -99,10 +101,11 @@ resource "kubectl_manifest" "aws_cni_resources" {
 }
 
 resource "kubectl_manifest" "k8s_dns_resources" {
-  count     = var.genie_cni ? length(data.kubectl_path_documents.k8s_dns_resources_count.documents) : 0
+  count = var.enable_coredns ? var.genie_cni ? length(data.kubectl_path_documents.k8s_dns_resources_count[0].documents[0]) : 0 : 0
+
   force_new = true
 
-  yaml_body = element(data.kubectl_path_documents.k8s_dns_resources.documents, count.index)
+  yaml_body = element(data.kubectl_path_documents.k8s_dns_resources[0].documents, count.index)
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
