@@ -48,7 +48,7 @@ data "kubectl_path_documents" "k8s_dns_resources" {
   vars = {
     cni            = var.remove_aws_vpc_cni ? "" : "aws"
     region         = var.default_region
-    dns_cluster_ip = data.kubernetes_service.kube_dns.spec.0.cluster_ip
+    dns_cluster_ip = data.kubernetes_service.kube_dns.spec != null ? data.kubernetes_service.kube_dns.spec.0.cluster_ip : "172.20.0.10"
   }
 
   depends_on = [
