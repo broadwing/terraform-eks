@@ -95,19 +95,13 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
+      maxSurge: 25%
       maxUnavailable: 1
-  # broadwing - start
-  #   maxSurge: 1
-  # broadwing - end
   selector:
     matchLabels:
       k8s-app: kube-dns
       eks.amazonaws.com/component: coredns
-
-  # broadwing - start
-  #progressDeadlineSeconds: 2147483647
-  #revisionHistoryLimit: 2147483647
-  # broadwing - end
+  progressDeadlineSeconds: 600
   template:
     metadata:
       labels:
@@ -117,7 +111,6 @@ spec:
         eks.amazonaws.com/compute-type: ec2
   # broadwing - start
         cni: aws
-  #   creationTimestamp: null
   # broadwing - end
     spec:
       serviceAccountName: coredns
@@ -155,6 +148,9 @@ spec:
       containers:
       - name: coredns
         image: 602401143452.dkr.ecr.${region}.amazonaws.com/eks/coredns:v1.8.0-eksbuild.1
+        args:
+        - -conf
+        - /etc/coredns/Corefile
         imagePullPolicy: IfNotPresent
         resources:
           limits:
@@ -162,7 +158,6 @@ spec:
           requests:
             cpu: 100m
             memory: 70Mi
-        args: [ "-conf", "/etc/coredns/Corefile" ]
         volumeMounts:
         - name: config-volume
           mountPath: /etc/coredns
@@ -188,14 +183,16 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 5
-  # broadwing - start
-  #       periodSeconds: 10
-  # broadwing - end
+          periodSeconds: 10
         readinessProbe:
+          failureThreshold: 3
           httpGet:
             path: /health
             port: 8080
             scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -205,18 +202,18 @@ spec:
             - all
           readOnlyRootFilesystem: true
       dnsPolicy: Default
+      restartPolicy: Always
+      serviceAccount: coredns
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: config-volume
-          configMap:
-            name: coredns
-            items:
-            - key: Corefile
-              path: Corefile
-  # broadwing - start
-  #       defaultMode: 420
-  # broadwing - end
+      - name: tmp
+        emptyDir: {}
+      - configMap:
+          defaultMode: 420
+          items:
+          - key: Corefile
+            path: Corefile
+          name: coredns
+        name: config-volume
 ---
 apiVersion: v1
 kind: Service
@@ -227,10 +224,10 @@ metadata:
     prometheus.io/port: "9153"
     prometheus.io/scrape: "true"
   labels:
+    eks.amazonaws.com/component: kube-dns
     k8s-app: kube-dns
     kubernetes.io/cluster-service: "true"
     kubernetes.io/name: "CoreDNS"
-    eks.amazonaws.com/component: kube-dns
 spec:
   selector:
     k8s-app: kube-dns
@@ -239,6 +236,10 @@ spec:
   - name: dns
     port: 53
     protocol: UDP
+    targetPort: 53
   - name: dns-tcp
     port: 53
     protocol: TCP
+    targetPort: 53
+  sessionAffinity: None
+  type: ClusterIP
