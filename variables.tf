@@ -4,7 +4,7 @@ variable "name" {
 
 variable "cluster_version" {
   description = "Version of the cluster"
-  default     = "1.17"
+  default     = "1.20"
 }
 
 variable "environment" {
@@ -50,8 +50,13 @@ variable "get_dashboard_token" {
   type        = bool
 }
 
-variable "alb_ingress_controller" {
+variable "aws_load_balancer_controller" {
   description = "If alb ingress controller should be installed"
+  default     = "true"
+}
+
+variable "cert_manager" {
+  description = "If cert-manager should be installed"
   default     = "true"
 }
 
@@ -138,9 +143,9 @@ variable "alb_prefix" {
   default     = ""
 }
 
-variable "alb_ingress_controller_image" {
+variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "docker.io/amazon/aws-alb-ingress-controller:v1.1.7"
+  default     = "amazon/aws-alb-ingress-controller:v2.2.0"
 }
 
 variable "sealed_secrets_controller" {

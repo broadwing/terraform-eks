@@ -13,6 +13,8 @@ resource "kubectl_manifest" "metrics_server_resources" {
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
+  server_side_apply = true
+
   # Forces waiting for cluster to be available
   depends_on = [module.eks.cluster_id]
 }

@@ -15,8 +15,8 @@ data "kubectl_path_documents" "calico_resources" {
   }
 }
 
-data "kubectl_path_documents" "aws_cni_resources" {
-  pattern = "${path.module}/cluster_configs/aws-node.tpl.yaml"
+data "kubectl_path_documents" "aws_k8s_cni_resources" {
+  pattern = "${path.module}/cluster_configs/aws-k8s-cni.tpl.yaml"
   vars = {
     externalsnat     = var.calico_cni ? "true" : "false"
     excludesnatcidrs = var.calico_cni ? "192.168.0.0/16" : "false"
@@ -39,6 +39,8 @@ resource "kubectl_manifest" "genie_resources" {
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
+  server_side_apply = true
+
   # Forces waiting for cluster to be available
   depends_on = [module.eks.cluster_id]
 }
@@ -51,6 +53,8 @@ resource "kubectl_manifest" "calico_resources" {
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
+  server_side_apply = true
+
   depends_on = [
     # Forces waiting for cluster to be available
     module.eks.cluster_id,
@@ -58,14 +62,16 @@ resource "kubectl_manifest" "calico_resources" {
   ]
 }
 
-resource "kubectl_manifest" "aws_cni_resources" {
-  count     = length(data.kubectl_path_documents.aws_cni_resources.documents)
+resource "kubectl_manifest" "aws_k8s_cni_resources" {
+  count     = length(data.kubectl_path_documents.aws_k8s_cni_resources.documents)
   force_new = true
 
-  yaml_body = element(data.kubectl_path_documents.aws_cni_resources.documents, count.index)
+  yaml_body = element(data.kubectl_path_documents.aws_k8s_cni_resources.documents, count.index)
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
+
+  server_side_apply = true
 
   depends_on = [
     # Forces waiting for cluster to be available
@@ -82,6 +88,8 @@ resource "kubectl_manifest" "k8s_dns_resources" {
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
+
+  server_side_apply = true
 
   depends_on = [
     # Forces waiting for cluster to be available

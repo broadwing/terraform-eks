@@ -57,7 +57,6 @@ module "eks" {
   node_groups = local.node_groups
 
   alb_prefix                   = "k8s"
-  alb_ingress_controller_image = "docker.io/m00nf1sh/aws-alb-ingress-controller:v1.2.0-alpha.2" # New ingress controller with shared alb support
   get_dashboard_token          = "false"
 
   map_users = local.users
