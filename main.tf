@@ -232,11 +232,11 @@ module "eks" {
         "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "${mng.disk_size}Gi"
       } : {})
 
-      taints = mng.dedicated ? {
+      taints = mng.dedicated ? [{
         key    = "dedicated"
         value  = mng.name
         effect = "NO_SCHEDULE"
-      } : null
+      }] : null
 
       # TODO SSM Support
       # https://github.com/aws/containers-roadmap/issues/593
