@@ -256,7 +256,7 @@ variable "flux_git_user" {
 
 variable "flux_git_url" {
   type        = string
-  default     = null
+  default     = ""
   description = "The flux git-url to track"
 }
 
