@@ -39,8 +39,6 @@ resource "kubectl_manifest" "genie_resources" {
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
-  server_side_apply = true
-
   # Forces waiting for cluster to be available
   depends_on = [module.eks.cluster_id]
 }
@@ -52,8 +50,6 @@ resource "kubectl_manifest" "calico_resources" {
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
-
-  server_side_apply = true
 
   depends_on = [
     # Forces waiting for cluster to be available
@@ -71,8 +67,6 @@ resource "kubectl_manifest" "aws_k8s_cni_resources" {
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
-  server_side_apply = true
-
   depends_on = [
     # Forces waiting for cluster to be available
     module.eks.cluster_id,
@@ -88,8 +82,6 @@ resource "kubectl_manifest" "k8s_dns_resources" {
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
-
-  server_side_apply = true
 
   depends_on = [
     # Forces waiting for cluster to be available
