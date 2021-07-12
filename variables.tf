@@ -34,6 +34,11 @@ variable "calico_cni" {
   default     = "true"
 }
 
+variable "depend_on_cnis" {
+  description = "If node creation should wait for CNIs to be applied"
+  default     = true
+}
+
 variable "remove_aws_vpc_cni" {
   description = "Remove AWS VPC CNI after installing calico"
   default     = "false"
