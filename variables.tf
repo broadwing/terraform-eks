@@ -143,11 +143,6 @@ variable "ebs_default_encrypted" {
   default     = "true"
 }
 
-variable "alb_prefix" {
-  description = "A Prefix to add to any ALBs or Target Groups the ALB Ingress Controller Creates"
-  default     = ""
-}
-
 variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
   default     = "amazon/aws-alb-ingress-controller:v2.2.0"

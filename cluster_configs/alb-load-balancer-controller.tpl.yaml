@@ -798,7 +798,6 @@ spec:
       - args:
         - --cluster-name=${cluster_name}
         - --ingress-class=alb
-        - --alb-name-prefix="${alb_prefix}"
         image: ${alb_image}
         livenessProbe:
           failureThreshold: 2

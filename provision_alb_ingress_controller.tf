@@ -2,7 +2,6 @@ data "kubectl_path_documents" "aws_load_balancer_controller_resources" {
   pattern = "${path.module}/cluster_configs/alb-load-balancer-controller.tpl.yaml"
   vars = {
     cluster_name = var.environment
-    alb_prefix   = var.alb_prefix
     alb_image    = var.aws_load_balancer_controller_image
     cni          = var.remove_aws_vpc_cni ? "" : "aws"
   }

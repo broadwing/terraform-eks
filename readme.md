@@ -56,7 +56,6 @@ module "eks" {
 
   node_groups = local.node_groups
 
-  alb_prefix                   = "k8s"
   get_dashboard_token          = "false"
 
   map_users = local.users
