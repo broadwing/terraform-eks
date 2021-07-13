@@ -40,7 +40,7 @@ module "eks" {
   name        = "main"
   environment = "prod"
 
-  cluster_version = "1.17"
+  cluster_version = "1.20"
 
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.private_subnets
