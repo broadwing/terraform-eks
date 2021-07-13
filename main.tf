@@ -51,17 +51,17 @@ locals {
         # Also forces nodes to not be created until cni is applied
         {
           key                 = "k8s.io/cni/genie"
-          value               = var.genie_cni ? kubectl_manifest.genie_resources[0].uid : "false"
+          value               = var.genie_cni && var.depend_on_cnis ? kubectl_manifest.genie_resources[0].uid : "false"
           propagate_at_launch = true
         },
         {
           key                 = "k8s.io/cni/calico"
-          value               = var.calico_cni ? kubectl_manifest.calico_resources[0].uid : "false"
+          value               = var.calico_cni && var.depend_on_cnis ? kubectl_manifest.calico_resources[0].uid : "false"
           propagate_at_launch = true
         },
         {
           key                 = "k8s.io/cni/aws"
-          value               = kubectl_manifest.aws_cni_resources[0].uid
+          value               = var.depend_on_cnis ? kubectl_manifest.aws_k8s_cni_resources[0].uid : "${!var.remove_aws_vpc_cni}"
           propagate_at_launch = true
         }],
         wg.dedicated ? [{
@@ -154,8 +154,6 @@ provider "kubernetes" {
   host                   = data.aws_eks_cluster.cluster.endpoint
   cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
   token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-  version                = "~> 1.10"
 }
 
 provider "kubectl" {
@@ -168,7 +166,7 @@ provider "kubectl" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "12.2.0"
+  version = "17.1.0"
 
   cluster_name    = var.name
   cluster_version = var.cluster_version
@@ -182,8 +180,8 @@ module "eks" {
   map_roles    = var.map_roles
   map_accounts = var.map_accounts
 
-  write_kubeconfig   = "true"
-  config_output_path = abspath("${path.root}/${var.name}.kubeconfig")
+  write_kubeconfig       = "true"
+  kubeconfig_output_path = abspath("${path.root}/${var.name}.kubeconfig")
 
   kubeconfig_aws_authenticator_env_variables = {
     AWS_PROFILE = var.aws_profile
@@ -234,9 +232,11 @@ module "eks" {
         "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "${mng.disk_size}Gi"
       } : {})
 
-      # TODO register with taints
-      # https://github.com/aws/containers-roadmap/issues/585
-      # https://github.com/aws/containers-roadmap/issues/864
+      taints = mng.dedicated ? [{
+        key    = "dedicated"
+        value  = mng.name
+        effect = "NO_SCHEDULE"
+      }] : null
 
       # TODO SSM Support
       # https://github.com/aws/containers-roadmap/issues/593

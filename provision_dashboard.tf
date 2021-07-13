@@ -11,6 +11,16 @@ data "kubectl_path_documents" "admin_service_account_resources" {
   }
 }
 
+resource "kubernetes_namespace" "dashboard" {
+  count = var.dashboard ? 1 : 0
+
+  metadata {
+    name = "kubernetes-dashboard"
+  }
+
+  depends_on = [module.eks.cluster_id]
+}
+
 resource "kubectl_manifest" "dashboard_resources" {
   count = var.dashboard ? length(data.kubectl_path_documents.dashboard_resources.documents) : 0
 
@@ -20,7 +30,7 @@ resource "kubectl_manifest" "dashboard_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id]
+  depends_on = [module.eks.cluster_id, kubernetes_namespace.dashboard]
 }
 
 resource "kubectl_manifest" "admin_service_account_resources" {
@@ -32,7 +42,7 @@ resource "kubectl_manifest" "admin_service_account_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id]
+  depends_on = [module.eks.cluster_id, kubernetes_namespace.dashboard]
 }
 
 
@@ -42,5 +52,5 @@ data "kubernetes_secret" "dashboard_token" {
     namespace = "kube-system"
   }
 
-  depends_on = [kubectl_manifest.admin_service_account_resources]
+  depends_on = [kubectl_manifest.admin_service_account_resources, kubernetes_namespace.dashboard]
 }

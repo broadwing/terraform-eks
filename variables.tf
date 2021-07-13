@@ -4,7 +4,7 @@ variable "name" {
 
 variable "cluster_version" {
   description = "Version of the cluster"
-  default     = "1.17"
+  default     = "1.20"
 }
 
 variable "environment" {
@@ -34,6 +34,11 @@ variable "calico_cni" {
   default     = "true"
 }
 
+variable "depend_on_cnis" {
+  description = "If node creation should wait for CNIs to be applied"
+  default     = true
+}
+
 variable "remove_aws_vpc_cni" {
   description = "Remove AWS VPC CNI after installing calico"
   default     = "false"
@@ -50,8 +55,13 @@ variable "get_dashboard_token" {
   type        = bool
 }
 
-variable "alb_ingress_controller" {
+variable "aws_load_balancer_controller" {
   description = "If alb ingress controller should be installed"
+  default     = "true"
+}
+
+variable "cert_manager" {
+  description = "If cert-manager should be installed"
   default     = "true"
 }
 
@@ -133,14 +143,9 @@ variable "ebs_default_encrypted" {
   default     = "true"
 }
 
-variable "alb_prefix" {
-  description = "A Prefix to add to any ALBs or Target Groups the ALB Ingress Controller Creates"
-  default     = ""
-}
-
-variable "alb_ingress_controller_image" {
+variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "docker.io/amazon/aws-alb-ingress-controller:v1.1.7"
+  default     = "amazon/aws-alb-ingress-controller:v2.2.0"
 }
 
 variable "sealed_secrets_controller" {
@@ -251,7 +256,7 @@ variable "flux_git_user" {
 
 variable "flux_git_url" {
   type        = string
-  default     = null
+  default     = ""
   description = "The flux git-url to track"
 }
 
