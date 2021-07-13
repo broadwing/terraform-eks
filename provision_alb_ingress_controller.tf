@@ -1,5 +1,5 @@
 data "kubectl_path_documents" "aws_load_balancer_controller_resources" {
-  pattern = "${path.module}/cluster_configs/aws-load-balancer-controller.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/alb-load-balancer-controller.tpl.yaml"
   vars = {
     cluster_name = var.environment
     alb_prefix   = var.alb_prefix
