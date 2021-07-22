@@ -40,7 +40,7 @@ module "eks" {
   name        = "main"
   environment = "prod"
 
-  cluster_version = "1.17"
+  cluster_version = "1.20"
 
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.private_subnets
@@ -56,8 +56,6 @@ module "eks" {
 
   node_groups = local.node_groups
 
-  alb_prefix                   = "k8s"
-  alb_ingress_controller_image = "docker.io/m00nf1sh/aws-alb-ingress-controller:v1.2.0-alpha.2" # New ingress controller with shared alb support
   get_dashboard_token          = "false"
 
   map_users = local.users
