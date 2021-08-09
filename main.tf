@@ -23,7 +23,7 @@ locals {
       subnets              = wg.subnets == null ? var.subnets : wg.subnets
       kubelet_extra_args = replace(
         <<-EOT
-                                --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "alpha.service-controller.kubernetes.io/exclude-balancer=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+                                --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "node.kubernetes.io/exclude-from-external-load-balancers=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
                                 ${wg.dedicated ? " --register-with-taints=dedicated=${wg.name}:NoSchedule" : ""}
                                 --eviction-hard=\"memory.available<5%\"
                                 --eviction-soft=\"memory.available<10%\"
@@ -39,7 +39,7 @@ locals {
           propagate_at_launch = true
         },
         {
-          key                 = "alpha.service-controller.kubernetes.io/exclude-balancer"
+          key                 = "node.kubernetes.io/exclude-from-external-load-balancers"
           value               = wg.external_lb ? "false" : "true"
           propagate_at_launch = true
         },
@@ -221,7 +221,7 @@ module "eks" {
       additional_tags = merge({
         "name"                                                    = "${var.name}-${mng.name}-eks-managed",
         "groupName"                                               = mng.name,
-        "alpha.service-controller.kubernetes.io/exclude-balancer" = mng.external_lb ? "false" : "true",
+        "node.kubernetes.io/exclude-from-external-load-balancers" = mng.external_lb ? "false" : "true",
         "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
         }, mng.dedicated ? {
         "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${mng.name}:NoSchedule"
@@ -247,7 +247,7 @@ module "eks" {
       k8s_labels = merge(
         { "groupName" = mng.name },
         mng.external_lb ? {} : {
-          "alpha.service-controller.kubernetes.io/exclude-balancer" = "true"
+          "node.kubernetes.io/exclude-from-external-load-balancers" = "true"
         },
         mng.additional_labels
       )
