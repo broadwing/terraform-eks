@@ -29,7 +29,7 @@ locals {
     {
       userarn  = "arn:aws:iam::<account_id>:user/<user>"
       username = "<user>"
-      group    = "system:masters"
+      groups    = ["system:masters"]
     }
   ]
 }
@@ -40,7 +40,7 @@ module "eks" {
   name        = "main"
   environment = "prod"
 
-  cluster_version = "1.20"
+  cluster_version = "1.21"
 
   vpc_id  = module.vpc.vpc_id
   subnets = module.vpc.private_subnets
