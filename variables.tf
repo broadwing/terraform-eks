@@ -20,18 +20,22 @@ variable "subnets" {
   type        = list(string)
 }
 
-variable "aws_profile" {
-  description = "AWS Profile to use when generating kubeconfig"
+variable "kubeconfig_aws_authenticator_env_variables" {
+  description = "Environment variables that should be used when executing the authenticator. e.g. { AWS_PROFILE = \"eks\"}."
+  type        = map(string)
+  default     = {}
 }
 
 variable "genie_cni" {
   description = "Install Genie CNI"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "calico_cni" {
   description = "Install Calico CNI"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "depend_on_cnis" {
@@ -41,12 +45,14 @@ variable "depend_on_cnis" {
 
 variable "remove_aws_vpc_cni" {
   description = "Remove AWS VPC CNI after installing calico"
-  default     = "false"
+  default     = false
+  type        = bool
 }
 
 variable "dashboard" {
   description = "If dashboard should be deployed"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "get_dashboard_token" {
@@ -57,22 +63,26 @@ variable "get_dashboard_token" {
 
 variable "aws_load_balancer_controller" {
   description = "If alb ingress controller should be installed"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "cert_manager" {
   description = "If cert-manager should be installed"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "external_dns" {
   description = "If external dns controller should be installed"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "metrics_server" {
   description = "If metrics-server should be installed"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "external_dns_domain_filters" {
@@ -88,7 +98,8 @@ variable "external_dns_type" {
 
 variable "allow_ssh" {
   description = "If SSH should be allowed into the worker nodes security group"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "allow_ssh_cidr" {
@@ -140,7 +151,8 @@ variable "map_users" {
 
 variable "ebs_default_encrypted" {
   description = "If we should enable EBS encryption by default for k8s created volumes"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "aws_load_balancer_controller_image" {
@@ -150,7 +162,8 @@ variable "aws_load_balancer_controller_image" {
 
 variable "sealed_secrets_controller" {
   description = "Whether or not to install the sealed secrests controller"
-  default     = "true"
+  default     = true
+  type        = bool
 }
 
 variable "node_groups" {

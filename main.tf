@@ -183,9 +183,7 @@ module "eks" {
   write_kubeconfig       = "true"
   kubeconfig_output_path = abspath("${path.root}/${var.name}.kubeconfig")
 
-  kubeconfig_aws_authenticator_env_variables = {
-    AWS_PROFILE = var.aws_profile
-  }
+  kubeconfig_aws_authenticator_env_variables = var.kubeconfig_aws_authenticator_env_variables
 
   enable_irsa = var.enable_irsa
 

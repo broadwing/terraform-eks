@@ -29,7 +29,7 @@ locals {
     {
       userarn  = "arn:aws:iam::<account_id>:user/<user>"
       username = "<user>"
-      groups    = ["system:masters"]
+      groups   = ["system:masters"]
     }
   ]
 }
@@ -46,8 +46,6 @@ module "eks" {
   subnets = module.vpc.private_subnets
 
   nodes_additional_security_group_ids = [module.vpc.default_security_group_id]
-
-  aws_profile = "default"
 
   external_dns_domain_filters = ["<route 53 domain>"]
   external_dns_type = "<internal|external>" or "" for auto-detect (default)
