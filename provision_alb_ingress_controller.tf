@@ -12,9 +12,11 @@ resource "kubectl_manifest" "aws_load_balancer_controller_resources" {
 
   yaml_body = element(data.kubectl_path_documents.aws_load_balancer_controller_resources.documents, count.index)
 
-  # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id, kubectl_manifest.cert_manager_resources]
+  depends_on = [
+    module.eks.cluster_id,
+    kubectl_manifest.cert_manager_resources
+  ]
 }

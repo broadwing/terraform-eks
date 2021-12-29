@@ -10,9 +10,13 @@ resource "kubectl_manifest" "cert_manager_resources" {
 
   yaml_body = element(data.kubectl_path_documents.cert_manager_resources.documents, count.index)
 
-  # We wont have any nodes yet so can't wait for rollout
-  wait_for_rollout = false
+  # Wait for rollout since other resources, like alb_controller need cert manager to exist first
+  wait_for_rollout = true
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id]
+  # and nodes to be up
+  depends_on = [
+    module.eks.cluster_id,
+    module.eks.node_groups
+  ]
 }
