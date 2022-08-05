@@ -47,6 +47,7 @@ resource "kubectl_manifest" "admin_service_account_resources" {
 
 
 data "kubernetes_secret" "dashboard_token" {
+  count = var.dashboard ? 1 : 0
   metadata {
     name      = kubectl_manifest.admin_service_account_resources[2].name
     namespace = "kube-system"

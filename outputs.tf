@@ -1,5 +1,5 @@
 output "dashboard_token" {
-  value = var.get_dashboard_token ? data.kubernetes_secret.dashboard_token.data.token : null
+  value = var.get_dashboard_token && var.dashboard ? data.kubernetes_secret.dashboard_token[0].data.token : null
 }
 
 output "flux_deploy_key" {

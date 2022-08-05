@@ -54,8 +54,6 @@ module "eks" {
 
   node_groups = local.node_groups
 
-  get_dashboard_token          = "false"
-
   map_users = local.users
 }
 ```
