@@ -145,7 +145,7 @@ variable "ebs_default_encrypted" {
 
 variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "amazon/aws-alb-ingress-controller:v2.2.0"
+  default     = "amazon/aws-alb-ingress-controller:v2.4.2"
 }
 
 variable "sealed_secrets_controller" {
