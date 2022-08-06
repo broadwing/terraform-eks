@@ -4,7 +4,7 @@ variable "name" {
 
 variable "cluster_version" {
   description = "Version of the cluster"
-  default     = "1.20"
+  default     = "1.22"
 }
 
 variable "environment" {
