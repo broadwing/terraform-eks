@@ -61,7 +61,7 @@ locals {
         },
         {
           key                 = "k8s.io/cni/aws"
-          value               = var.depend_on_cnis ? kubectl_manifest.aws_k8s_cni_resources[0].uid : "true"
+          value               = var.depend_on_cnis ? kubectl_manifest.aws_node_patch[0].uid : "true"
           propagate_at_launch = true
         }],
         wg.dedicated ? [{

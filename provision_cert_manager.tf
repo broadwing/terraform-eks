@@ -17,6 +17,7 @@ resource "kubectl_manifest" "cert_manager_resources" {
   # and nodes to be up
   depends_on = [
     module.eks.cluster_id,
-    module.eks.node_groups
+    module.eks.node_groups,
+    module.eks.workers_asg_arns
   ]
 }
