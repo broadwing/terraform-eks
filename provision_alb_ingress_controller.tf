@@ -3,7 +3,7 @@ data "kubectl_path_documents" "aws_load_balancer_controller_resources" {
   vars = {
     cluster_name = var.environment
     alb_image    = var.aws_load_balancer_controller_image
-    cni          = var.remove_aws_vpc_cni ? "" : "aws"
+    cni          = var.calico_cni ? "aws" : ""
   }
 }
 

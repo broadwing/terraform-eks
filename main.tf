@@ -51,7 +51,7 @@ locals {
         # Also forces nodes to not be created until cni is applied
         {
           key                 = "k8s.io/cni/genie"
-          value               = var.genie_cni && var.depend_on_cnis ? kubectl_manifest.genie_resources[0].uid : "false"
+          value               = var.calico_cni && var.depend_on_cnis ? kubectl_manifest.genie_resources[0].uid : "false"
           propagate_at_launch = true
         },
         {
@@ -61,7 +61,7 @@ locals {
         },
         {
           key                 = "k8s.io/cni/aws"
-          value               = var.depend_on_cnis ? kubectl_manifest.aws_k8s_cni_resources[0].uid : "${!var.remove_aws_vpc_cni}"
+          value               = var.depend_on_cnis ? kubectl_manifest.aws_k8s_cni_resources[0].uid : "true"
           propagate_at_launch = true
         }],
         wg.dedicated ? [{

@@ -1,7 +1,7 @@
 data "kubectl_path_documents" "cert_manager_resources" {
   pattern = "${path.module}/cluster_configs/cert-manager.tpl.yaml"
   vars = {
-    cni = var.remove_aws_vpc_cni ? "" : "aws"
+    cni = var.calico_cni ? "aws" : ""
   }
 }
 

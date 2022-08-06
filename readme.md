@@ -91,6 +91,13 @@ node_groups = [
 
 This will create a new Launch Template backed ASG using Spot instances and append the `node.kubernetes.io/lifecycle=spot` label to these nodes.
 
+### Disable calico
+If you'd rather use just the VPC networking for standard EKS cluster than you can disable calico with
+
+
+```hcl
+calico_cni = false
+```
 ## Dashboard
 
 After running you can access the dashboard by

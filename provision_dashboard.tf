@@ -1,7 +1,7 @@
 data "kubectl_path_documents" "dashboard_resources" {
   pattern = "${path.module}/cluster_configs/kubernetes-dashboard.tpl.yaml"
   vars = {
-    cni = var.remove_aws_vpc_cni ? "" : "aws"
+    cni = var.calico_cni ? "aws" : ""
   }
 }
 
