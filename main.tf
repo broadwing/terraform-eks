@@ -1,265 +1,208 @@
 locals {
-  defaulted_node_groups = [
-    for wg in var.node_groups :
-    merge(var.node_group_defaults, wg)
-  ]
+  ################################################################################
+  # Node Group Defaults
+  ################################################################################
 
-  defaulted_managed_node_groups = [
-    for mng in var.managed_node_groups :
-    merge(var.managed_node_group_defaults, mng)
-  ]
-
-  defaulted_worker_groups = [
-    for wg in local.defaulted_node_groups :
+  enriched_self_managed_node_group_defaults = merge(
+    # Merge original data
+    var.self_managed_node_group_defaults,
     {
-      lifecycle = wg.lifecycle
+      # Merge in post_bootstrap_user_data to install and enable ssm agent
+      post_bootstrap_user_data = var.enable_ssm_agent ? join("\n", [try(var.self_managed_node_group_defaults.post_bootstrap_user_data, ""), var.enable_ssm_agent_startup_script]) : null
 
-      # Worker group specific values
-      name                 = wg.name
-      instance_type        = flatten([wg.instance_type])[0]
-      asg_min_size         = wg.min_count
-      asg_desired_capacity = wg.count
-      asg_max_size         = wg.max_count
-      subnets              = wg.subnets == null ? var.subnets : wg.subnets
-      kubelet_extra_args = replace(
-        <<-EOT
-                                --node-labels=groupName=${wg.name},${wg.external_lb ? "" : "node.kubernetes.io/exclude-from-external-load-balancers=true,"}instanceId=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-                                ${wg.dedicated ? " --register-with-taints=dedicated=${wg.name}:NoSchedule" : ""}
-                                --eviction-hard=\"memory.available<5%\"
-                                --eviction-soft=\"memory.available<10%\"
-                                --eviction-soft-grace-period=\"memory.available=5m\"
-                                --system-reserved=\"memory=500Mi\"
-                              EOT
-      , "\n", " ")
-
-      tags = concat([
-        {
-          key                 = "groupName"
-          value               = wg.name
-          propagate_at_launch = true
-        },
-        {
-          key                 = "node.kubernetes.io/exclude-from-external-load-balancers"
-          value               = wg.external_lb ? "false" : "true"
-          propagate_at_launch = true
-        },
-        {
-          key                 = "k8s.io/cluster-autoscaler/node-template/label"
-          value               = wg.name
-          propagate_at_launch = true
-        },
-        # Also forces nodes to not be created until cni is applied
-        {
-          key                 = "k8s.io/cni/genie"
-          value               = var.calico_cni && var.depend_on_cnis ? kubectl_manifest.genie_resources[0].uid : "false"
-          propagate_at_launch = true
-        },
-        {
-          key                 = "k8s.io/cni/calico"
-          value               = var.calico_cni && var.depend_on_cnis ? kubectl_manifest.calico_resources[0].uid : "false"
-          propagate_at_launch = true
-        },
-        {
-          key                 = "k8s.io/cni/aws"
-          value               = var.depend_on_cnis ? kubectl_manifest.aws_node_patch[0].uid : "true"
-          propagate_at_launch = true
-        }],
-        wg.dedicated ? [{
-          key                 = "k8s.io/cluster-autoscaler/node-template/taint/dedicated"
-          value               = "${wg.name}:NoSchedule"
-          propagate_at_launch = true
-        }] : [],
-        wg.autoscale ? [{
-          key                 = "k8s.io/cluster-autoscaler/enabled"
-          value               = "true"
-          propagate_at_launch = false
-          },
-          {
-            "key"                 = "k8s.io/cluster-autoscaler/${var.name}"
-            "propagate_at_launch" = "false"
-            "value"               = "true"
-          },
-          {
-            "key"                 = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
-            "propagate_at_launch" = "false"
-            "value"               = "100Gi"
-        }] : []
-      )
-
-      # Vars for all worker groups
-      key_name             = var.nodes_key_name
-      pre_userdata         = templatefile("${path.module}/workers_user_data.sh.tpl", { pre_userdata = var.pre_userdata })
-      ami_id               = var.nodes_ami_id == "" ? (wg.gpu ? data.aws_ami.eks_gpu_worker.id : data.aws_ami.eks_worker.id) : var.nodes_ami_id
-      termination_policies = ["OldestLaunchConfiguration", "Default"]
-
-      enabled_metrics = [
-        "GroupDesiredCapacity",
-        "GroupInServiceInstances",
-        "GroupMaxSize",
-        "GroupMinSize",
-        "GroupPendingInstances",
-        "GroupStandbyInstances",
-        "GroupTerminatingInstances",
-        "GroupTotalInstances",
+      # Additional roles policies
+      iam_role_additional_policies = [
+        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
       ]
 
-      # Spot specific vars (when relevant)
-      spot_instance_pools                      = wg.spot_instance_pools
-      on_demand_base_capacity                  = wg.on_demand_base_capacity
-      on_demand_percentage_above_base_capacity = wg.on_demand_percentage_above_base_capacity
-      override_instance_types                  = wg.override_instance_types == null ? flatten([wg.instance_type]) : wg.override_instance_types
-    }
-  ]
-}
+      autoscaling_group_tags = merge(
+        try(var.self_managed_node_group_defaults.autoscaling_group_tags, {}),
 
-data "aws_caller_identity" "current" {
-}
+        # Forces waiting for aws_node to be patched before lettings nodes start
+        var.use_vpc_cni_prefix_delegation ? {
+          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
+        } : {},
+      )
+    },
+  )
 
-data "aws_partition" "current" {
-}
-
-data "aws_ami" "eks_worker" {
-  filter {
-    name   = "name"
-    values = ["amazon-eks-node-${var.cluster_version}-v*"]
-  }
-
-  most_recent = true
-
-  # Owner ID of AWS EKS team
-  owners = ["602401143452"]
-}
-
-data "aws_ami" "eks_gpu_worker" {
-  filter {
-    name   = "name"
-    values = ["amazon-eks-gpu-node-${var.cluster_version}-v*"]
-  }
-
-  most_recent = true
-
-  # Owner ID of AWS EKS team
-  owners = ["602401143452"]
-}
-
-data "aws_eks_cluster" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
-}
-
-data "aws_region" "current" {}
-
-provider "kubernetes" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-}
-
-provider "kubectl" {
-  host                   = data.aws_eks_cluster.cluster.endpoint
-  cluster_ca_certificate = base64decode(data.aws_eks_cluster.cluster.certificate_authority.0.data)
-  token                  = data.aws_eks_cluster_auth.cluster.token
-  load_config_file       = false
-}
-
-
-module "eks" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "17.24.0"
-
-  cluster_name    = var.name
-  cluster_version = var.cluster_version
-
-  vpc_id  = var.vpc_id
-  subnets = var.subnets
-
-  #We need to manage auth ourselves since we create the workers later their role wont be added
-  # manage_aws_auth = "true"
-  map_users    = var.map_users
-  map_roles    = var.map_roles
-  map_accounts = var.map_accounts
-
-  write_kubeconfig       = "true"
-  kubeconfig_output_path = abspath("${path.root}/${var.name}.kubeconfig")
-
-  kubeconfig_aws_authenticator_env_variables = var.kubeconfig_aws_authenticator_env_variables
-
-  enable_irsa = var.enable_irsa
-
-  worker_additional_security_group_ids = var.nodes_additional_security_group_ids
-
-  # This will launch an autoscaling group with only On-Demand instances
-  worker_groups = [
-    for wg in local.defaulted_worker_groups : wg if wg.lifecycle != "spot"
-  ]
-
-  # This will launch an autoscaling group with Spot instances
-  worker_groups_launch_template = [
-    for wg in local.defaulted_worker_groups :
-    merge(wg, {
-      suspended_processes : ["AZRebalance"],
-      kubelet_extra_args : replace(wg.kubelet_extra_args, "--node-labels=", "--node-labels=node.kubernetes.io/lifecycle=spot,")
-    })
-    if wg.lifecycle == "spot"
-  ]
-
-  node_groups = [
-    for mng in local.defaulted_managed_node_groups :
+  enriched_eks_managed_node_group_defaults = merge(
+    # Merge original data
+    var.eks_managed_node_group_defaults,
     {
-      # Worker group specific values
-      name             = mng.name
-      min_capacity     = mng.min_count
-      desired_capacity = mng.count
-      max_capacity     = mng.max_count
-      instance_type    = mng.instance_type
-      disk_size        = mng.disk_size
-      subnets          = mng.subnets == null ? var.subnets : mng.subnets
+      # SSM Already installed on EKS managed nodes
 
-      additional_tags = merge({
-        "name"                                                    = "${var.name}-${mng.name}-eks-managed",
-        "groupName"                                               = mng.name,
-        "node.kubernetes.io/exclude-from-external-load-balancers" = mng.external_lb ? "false" : "true",
-        "k8s.io/cluster-autoscaler/node-template/label"           = mng.name,
-        }, mng.dedicated ? {
-        "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${mng.name}:NoSchedule"
-        } : {
-        }, mng.autoscale ? {
-        "k8s.io/cluster-autoscaler/enabled"                                   = "true",
-        "k8s.io/cluster-autoscaler/${var.name}"                               = "true",
-        "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "${mng.disk_size}Gi"
-      } : {})
+      # Additional roles policies
+      iam_role_additional_policies = [
+        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      ]
 
-      taints = mng.dedicated ? [{
-        key    = "dedicated"
-        value  = mng.name
-        effect = "NO_SCHEDULE"
-      }] : null
+      launch_template_tags = merge(
+        try(var.self_managed_node_group_defaults.launch_template_tags, {}),
 
-      # TODO SSM Support
-      # https://github.com/aws/containers-roadmap/issues/593
+        # Forces waiting for aws_node to be patched before lettings nodes start
+        var.use_vpc_cni_prefix_delegation ? {
+          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
+        } : {}
+      )
+    },
+  )
 
-      # TODO verify autoscaling working
-      # TODO verify load balancer tag works
+  ################################################################################
+  # Prefixed Names
+  ################################################################################
 
-      k8s_labels = merge(
-        { "groupName" = mng.name },
-        mng.external_lb ? {} : {
-          "node.kubernetes.io/exclude-from-external-load-balancers" = "true"
+  enriched_self_managed_node_group_prefixed_names = {
+    for key, node in var.self_managed_node_groups :
+    key =>
+    # If name is set use that
+    try(
+      var.prefix_names_with_cluster ? "${var.cluster_name}-${node.name}" : node.name,
+      var.prefix_names_with_cluster ? "${var.cluster_name}-${key}" : key
+    )
+  }
+
+  enriched_eks_managed_node_group_prefixed_names = {
+    for key, node in var.eks_managed_node_groups :
+    key =>
+    # If name is set use that
+    try(
+      var.prefix_names_with_cluster ? "${var.cluster_name}-${node.name}" : node.name,
+      var.prefix_names_with_cluster ? "${var.cluster_name}-${key}" : key
+    )
+  }
+
+  ################################################################################
+  # Self Managed Node Groups
+  ################################################################################
+  enriched_self_managed_node_groups = {
+    for key, node in var.self_managed_node_groups :
+
+    # Merge original node values
+    local.enriched_self_managed_node_group_prefixed_names[key] => merge(node, {
+      # Set prefixed name if needed
+      name = local.enriched_self_managed_node_group_prefixed_names[key]
+
+      # Merge tags
+      tags = merge(try(local.enriched_self_managed_node_group_prefixed_names.tags, {}), try(node.tags, {}),
+        # Base tags
+        {
+          group-name                                                = local.enriched_self_managed_node_group_prefixed_names[key]
+          "node.kubernetes.io/exclude-from-external-load-balancers" = try(node.exclude_from_external_load_balancers, local.enriched_self_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "true" : "false"
         },
-        mng.additional_labels
+
+        # Autoscaling tags
+        try(node.autoscale, local.enriched_self_managed_node_group_defaults.autoscale, var.default_autoscale) ? {
+          "k8s.io/cluster-autoscaler/enabled"                        = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}"            = "owned"
+          "k8s.io/cluster-autoscaler/node-template/label/group-name" = local.enriched_self_managed_node_group_prefixed_names[key]
+        } : {},
+
+        # Autoscaling taint tag
+        try(node.autoscale, local.enriched_self_managed_node_group_defaults.autoscale, var.default_autoscale)
+        &&
+        try(node.dedicated, local.enriched_self_managed_node_group_defaults.dedicated, false) ? {
+          "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${local.enriched_self_managed_node_group_prefixed_names[key]}:NoSchedule"
+        } : {}
       )
 
-      key_name = var.allow_ssh ? var.nodes_key_name : null
-    }
-  ]
 
-  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+      bootstrap_extra_args = replace(
+        <<-EOT
+        --kubelet-extra-args "
 
-  tags = {
-    Owner       = "Terraform"
-    Environment = var.environment
+        --node-labels=group-name=${local.enriched_self_managed_node_group_prefixed_names[key]},
+        ${try(node.exclude_from_external_load_balancers, local.enriched_self_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "node.kubernetes.io/exclude-from-external-load-balancers=true," : ""}
+        instanceId=$(ec2-metadata -i | cut -d ' ' -f2)
+
+        ${try(node.dedicated, local.enriched_self_managed_node_group_defaults.dedicated, false) ? " --register-with-taints=dedicated=${local.enriched_self_managed_node_group_prefixed_names[key]}:NoSchedule" : ""}
+
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        "
+        EOT
+      , "\n", "")
+    })
   }
+
+  ################################################################################
+  # EKS Managed Node Groups
+  ################################################################################
+  enriched_eks_managed_node_groups = {
+    for key, node in var.eks_managed_node_groups :
+
+    # Merge original node values
+    local.enriched_eks_managed_node_group_prefixed_names[key] => merge(node, {
+      # Set prefixed name if needed
+      name = local.enriched_eks_managed_node_group_prefixed_names[key]
+
+      # Merge tags
+      tags = merge(try(local.enriched_eks_managed_node_group_prefixed_names.tags, {}), try(node.tags, {}),
+        # Base tags
+        {
+          group-name                                                = local.enriched_eks_managed_node_group_prefixed_names[key]
+          "node.kubernetes.io/exclude-from-external-load-balancers" = try(node.exclude_from_external_load_balancers, local.enriched_eks_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "true" : "false"
+        },
+
+        # Autoscaling tags
+        try(node.autoscale, local.enriched_eks_managed_node_group_defaults.autoscale, var.default_autoscale) ? {
+          "k8s.io/cluster-autoscaler/enabled"                        = "true"
+          "k8s.io/cluster-autoscaler/${var.cluster_name}"            = "owned"
+          "k8s.io/cluster-autoscaler/node-template/label/group-name" = local.enriched_eks_managed_node_group_prefixed_names[key]
+        } : {},
+
+        # Autoscaling taint tag
+        try(node.autoscale, local.enriched_eks_managed_node_group_defaults.autoscale, var.default_autoscale)
+        &&
+        try(node.dedicated, local.enriched_eks_managed_node_group_defaults.dedicated, false) ? {
+          "k8s.io/cluster-autoscaler/node-template/taint/dedicated" = "${local.enriched_eks_managed_node_group_prefixed_names[key]}:NoSchedule"
+        } : {}
+      )
+
+      # See issue https://github.com/awslabs/amazon-eks-ami/issues/844
+      # https://github.com/terraform-aws-modules/terraform-aws-eks/pull/2150
+      pre_bootstrap_user_data = <<-EOT
+        #!/bin/bash
+        set -ex
+        cat <<-EOF > /etc/profile.d/bootstrap.sh
+
+        export KUBELET_EXTRA_ARGS="${replace(
+      <<-EOS
+        --node-labels=${try(node.exclude_from_external_load_balancers, local.enriched_eks_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "node.kubernetes.io/exclude-from-external-load-balancers=true," : ""}
+        instanceId=$(ec2-metadata -i | cut -d ' ' -f2)
+
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        EOS
+    , "\n", "")}"
+        EOF
+
+        # Source extra environment variables in bootstrap script
+        sed -i '/^set -o errexit/a\\nsource /etc/profile.d/bootstrap.sh' /etc/eks/bootstrap.sh
+        sed -i 's/KUBELET_EXTRA_ARGS=$2/KUBELET_EXTRA_ARGS="$2 $KUBELET_EXTRA_ARGS"/' /etc/eks/bootstrap.sh
+    EOT
+
+
+    labels = merge(
+      try(local.enriched_eks_managed_node_group_defaults.labels, {}),
+      try(node.labels, {}),
+      {
+        group-name = local.enriched_eks_managed_node_group_prefixed_names[key]
+      }
+    )
+
+    taints = merge(
+      try(local.enriched_eks_managed_node_group_defaults.taints, {}),
+      try(node.taints, {}),
+      try(node.dedicated, local.enriched_eks_managed_node_group_defaults.dedicated, false) ?
+      {
+        dedicated = {
+          key    = "dedicated"
+          value  = local.enriched_eks_managed_node_group_prefixed_names[key]
+          effect = "NO_SCHEDULE"
+        }
+      } : {}
+    )
+})
+}
 }

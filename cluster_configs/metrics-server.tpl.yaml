@@ -129,13 +129,12 @@ spec:
     metadata:
       labels:
         k8s-app: metrics-server
-      annotations:
-        cni: "${cni}"
     spec:
       containers:
       - args:
         - --cert-dir=/tmp
-        - --secure-port=4443
+        # Using non default metric server port of 4443 because default sg of cluster only allows 443 from master nodes to regular nodes
+        - --secure-port=443
         - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
         - --kubelet-use-node-status-port
         - --metric-resolution=15s
@@ -150,7 +149,7 @@ spec:
           periodSeconds: 10
         name: metrics-server
         ports:
-        - containerPort: 4443
+        - containerPort: 443
           name: https
           protocol: TCP
         readinessProbe:

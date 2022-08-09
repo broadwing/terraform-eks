@@ -1,4 +1,6 @@
 data "kubectl_path_documents" "flux_resources" {
+  count = var.provision_flux ? 1 : 0
+
   pattern = "${path.module}/cluster_configs/flux.tpl.yaml"
   vars = {
     flux_git_user            = var.flux_git_user
@@ -10,34 +12,34 @@ data "kubectl_path_documents" "flux_resources" {
 }
 
 resource "kubectl_manifest" "flux_resources" {
-  count = var.flux ? length(data.kubectl_path_documents.flux_resources.documents) : 0
+  count = var.provision_flux ? length(data.kubectl_path_documents.flux_resources[0].documents) : 0
 
-  yaml_body = element(data.kubectl_path_documents.flux_resources.documents, count.index)
+  yaml_body = element(data.kubectl_path_documents.flux_resources[0].documents, count.index)
 
   # We wont have any nodes yet so can't wait for rollout
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [module.eks.cluster_id, kubernetes_secret.flux_deploy_key, kubernetes_namespace.flux]
+  depends_on = [var.eks_module_cluster_id, kubernetes_secret.flux_deploy_key, kubernetes_namespace.flux]
 }
 
 resource "kubernetes_namespace" "flux" {
-  count = var.flux ? 1 : 0
+  count = var.provision_flux ? 1 : 0
 
   metadata {
     name = "flux"
   }
 
-  depends_on = [module.eks.cluster_id]
+  depends_on = [var.eks_module_cluster_id]
 }
 
 resource "tls_private_key" "flux_deploy_key" {
-  count     = var.flux ? 1 : 0
+  count     = var.provision_flux ? 1 : 0
   algorithm = "RSA"
 }
 
 resource "kubernetes_secret" "flux_deploy_key" {
-  count = var.flux ? 1 : 0
+  count = var.provision_flux ? 1 : 0
 
   metadata {
     name      = "flux-git-deploy"
@@ -48,5 +50,5 @@ resource "kubernetes_secret" "flux_deploy_key" {
     identity = tls_private_key.flux_deploy_key[0].private_key_pem
   }
 
-  depends_on = [module.eks.cluster_id, kubernetes_namespace.flux]
+  depends_on = [var.eks_module_cluster_id, kubernetes_namespace.flux]
 }

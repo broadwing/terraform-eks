@@ -177,8 +177,6 @@ spec:
     metadata:
       labels:
         k8s-app: kubernetes-dashboard
-      annotations:
-        cni: "${cni}"
     spec:
       securityContext:
         seccompProfile:
@@ -264,8 +262,6 @@ spec:
     metadata:
       labels:
         k8s-app: dashboard-metrics-scraper
-      annotations:
-        cni: "${cni}"
     spec:
       securityContext:
         seccompProfile:

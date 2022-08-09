@@ -817,8 +817,6 @@ spec:
       labels:
         app.kubernetes.io/component: controller
         app.kubernetes.io/name: aws-load-balancer-controller
-      annotations:
-        cni: "${cni}"
     spec:
       containers:
       - args:
