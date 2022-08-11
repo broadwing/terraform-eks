@@ -165,6 +165,11 @@ variable "external_dns_type" {
   default     = ""
 }
 
+variable "external_dns_policy" {
+  description = "The --policy type to pass to external-dns. By default upsert-only would prevent ExternalDNS from deleting any records."
+  default     = "upsert-only"
+}
+
 ################################################################################
 # Flux
 ################################################################################

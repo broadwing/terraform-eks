@@ -12,6 +12,7 @@ data "kubectl_path_documents" "external_dns_resources" {
   vars = {
     domain_filters = local.external_dns_domain_filters
     domain_type    = var.external_dns_type
+    policy         = var.external_dns_policy
     txt_owner_id   = "eks-${var.cluster_name}-external-dns"
     region         = data.aws_region.current.name
   }
