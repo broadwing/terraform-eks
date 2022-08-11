@@ -69,6 +69,24 @@ spec:
                 - ipv4
                 - dualstack
                 type: string
+              loadBalancerAttributes:
+                description: LoadBalancerAttributes define the custom attributes to
+                  LoadBalancers for all Ingress that that belong to IngressClass with
+                  this IngressClassParams.
+                items:
+                  description: Attributes defines custom attributes on resources.
+                  properties:
+                    key:
+                      description: The key of the attribute.
+                      type: string
+                    value:
+                      description: The value of the attribute.
+                      type: string
+                  required:
+                  - key
+                  - value
+                  type: object
+                type: array
               namespaceSelector:
                 description: NamespaceSelector restrict the namespaces of Ingresses
                   that are allowed to specify the IngressClass with this IngressClassParams.
@@ -369,6 +387,13 @@ spec:
           spec:
             description: TargetGroupBindingSpec defines the desired state of TargetGroupBinding
             properties:
+              ipAddressType:
+                description: ipAddressType specifies whether the target group is of
+                  type IPv4 or IPv6. If unspecified, it will be automatically inferred.
+                enum:
+                - ipv4
+                - ipv6
+                type: string
               networking:
                 description: networking defines the networking rules to allow ELBV2
                   LoadBalancer to access targets in TargetGroup.
@@ -511,6 +536,7 @@ spec:
               targetGroupARN:
                 description: targetGroupARN is the Amazon Resource Name (ARN) for
                   the TargetGroup.
+                minLength: 1
                 type: string
               targetType:
                 description: targetType is the TargetType of TargetGroup. If unspecified,
@@ -634,14 +660,6 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - secrets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
   - services
   verbs:
   - get
@@ -656,6 +674,14 @@ rules:
   verbs:
   - patch
   - update
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
 - apiGroups:
   - elbv2.k8s.aws
   resources:
@@ -791,8 +817,6 @@ spec:
       labels:
         app.kubernetes.io/component: controller
         app.kubernetes.io/name: aws-load-balancer-controller
-      annotations:
-        cni: "${cni}"
     spec:
       containers:
       - args:
@@ -838,7 +862,7 @@ spec:
           defaultMode: 420
           secretName: aws-load-balancer-webhook-tls
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   labels:
@@ -854,7 +878,7 @@ spec:
     name: aws-load-balancer-selfsigned-issuer
   secretName: aws-load-balancer-webhook-tls
 ---
-apiVersion: cert-manager.io/v1alpha2
+apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   labels:
@@ -960,7 +984,7 @@ webhooks:
     service:
       name: aws-load-balancer-webhook-service
       namespace: kube-system
-      path: /validate-networking-v1beta1-ingress
+      path: /validate-networking-v1-ingress
   failurePolicy: Fail
   matchPolicy: Equivalent
   name: vingress.elbv2.k8s.aws
@@ -968,10 +992,30 @@ webhooks:
   - apiGroups:
     - networking.k8s.io
     apiVersions:
-    - v1beta1
+    - v1
     operations:
     - CREATE
     - UPDATE
     resources:
     - ingresses
   sideEffects: None
+---
+apiVersion: elbv2.k8s.aws/v1beta1
+kind: IngressClassParams
+metadata:
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+  name: alb
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  labels:
+    app.kubernetes.io/name: aws-load-balancer-controller
+  name: alb
+spec:
+  controller: ingress.k8s.aws/alb
+  parameters:
+    apiGroup: elbv2.k8s.aws
+    kind: IngressClassParams
+    name: alb

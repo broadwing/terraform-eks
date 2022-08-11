@@ -1,55 +1,124 @@
-variable "name" {
-  description = "Name of cluster"
+variable "cluster_name" {
+  description = "Name of the EKS cluster. Must match the cluster_name passed into the eks module"
+  type        = string
 }
 
-variable "cluster_version" {
-  description = "Version of the cluster"
-  default     = "1.20"
+variable "eks_module" {
+  description = "A reference to the whole eks module. eg eks_module = module.eks"
+  type        = any
 }
 
-variable "environment" {
-  description = "Name of the environment"
+variable "eks_module_cluster_id" {
+  description = "Output of the eks module's cluster_id for enforcing dependency order. eg eks_module_cluster_id = module.eks.cluster_id"
+  type        = string
 }
 
-variable "vpc_id" {
-  description = "Id of VPC"
+################################################################################
+# Helper functions that this module exposes to make changes on upstream EKS module more simple
+################################################################################
+variable "prefix_names_with_cluster" {
+  description = "If the names of nodes and their resources should be prefixed with the EKS name"
+  type        = bool
+  default     = true
 }
 
-variable "subnets" {
-  description = "Subnets to place master nodes in"
-  type        = list(string)
+variable "use_vpc_cni_prefix_delegation" {
+  description = "Sets ENABLE_PREFIX_DELEGATION, WARM_IP_TARGET, and MINIMUM_IP_TARGET on the vpc-cni to enable more pods and ips per node"
+  type        = bool
+  default     = true
 }
 
-variable "kubeconfig_aws_authenticator_env_variables" {
-  description = "Environment variables that should be used when executing the authenticator. e.g. { AWS_PROFILE = \"eks\"}."
-  type        = map(string)
+variable "default_autoscale" {
+  description = "If appropriate autoscaling tags should be added to resources. Can be overriden by `autoscale` value in each nodegroup"
+  type        = bool
+  default     = true
+}
+
+variable "enable_ssm_agent" {
+  description = "If the SSM agent should be installed, enabled, and IAM policy attached to all nodes"
+  type        = bool
+  default     = true
+}
+
+variable "enable_ssm_agent_startup_script" {
+  description = "The startup script to append to post_bootstrap_user_data to enable ssm"
+  type        = string
+  default     = <<-EOT
+  cd /tmp
+  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
+  sudo systemctl enable amazon-ssm-agent
+  sudo systemctl start amazon-ssm-agent
+  EOT
+}
+
+################################################################################
+# Self Managed Node Group
+################################################################################
+
+variable "self_managed_node_groups" {
+  description = "Map of self-managed node group definitions that this module will add customatizations to that can then be past into the EKS module"
+  type        = any
   default     = {}
 }
 
-variable "genie_cni" {
-  description = "Install Genie CNI"
+variable "self_managed_node_group_defaults" {
+  description = "Map of self-managed node group default configurations that this module will add customatizations to that can then be past into the EKS module"
+  type        = any
+  default     = {}
+}
+
+################################################################################
+# EKS Managed Node Group
+################################################################################
+
+variable "eks_managed_node_groups" {
+  description = "Map of EKS managed node group definitions that this module will add customatizations to that can then be past into the EKS module"
+  type        = any
+  default     = {}
+}
+
+variable "eks_managed_node_group_defaults" {
+  description = "Map of EKS managed node group default configurations that this module will add customatizations to that can then be past into the EKS module"
+  type        = any
+  default     = {}
+}
+
+################################################################################
+# ALB Ingress Controller
+################################################################################
+variable "provision_aws_load_balancer_controller" {
+  description = "If alb ingress controller should be installed"
   default     = true
   type        = bool
 }
 
-variable "calico_cni" {
-  description = "Install Calico CNI"
+variable "aws_load_balancer_controller_image" {
+  description = "Image for installing ingress controller"
+  default     = "amazon/aws-alb-ingress-controller:v2.4.2"
+}
+
+################################################################################
+# Cluster Autoscaler
+################################################################################
+variable "provision_cluster_autoscaler" {
+  description = "If cluster autoscaler should be installed"
   default     = true
   type        = bool
 }
 
-variable "depend_on_cnis" {
-  description = "If node creation should wait for CNIs to be applied"
+################################################################################
+# Cert Manager
+################################################################################
+variable "provision_cert_manager" {
+  description = "If cert-manager should be installed"
   default     = true
-}
-
-variable "remove_aws_vpc_cni" {
-  description = "Remove AWS VPC CNI after installing calico"
-  default     = false
   type        = bool
 }
 
-variable "dashboard" {
+################################################################################
+# Dashboard
+################################################################################
+variable "provision_dashboard" {
   description = "If dashboard should be deployed"
   default     = true
   type        = bool
@@ -61,26 +130,26 @@ variable "get_dashboard_token" {
   type        = bool
 }
 
-variable "aws_load_balancer_controller" {
-  description = "If alb ingress controller should be installed"
+################################################################################
+# EBS Storage
+################################################################################
+variable "provision_ebs_storage" {
+  description = "If ebs storage should be deployed to control encryption settings"
   default     = true
   type        = bool
 }
 
-variable "cert_manager" {
-  description = "If cert-manager should be installed"
+variable "ebs_default_encrypted" {
+  description = "If we should enable EBS encryption by default for k8s created volumes"
   default     = true
   type        = bool
 }
 
-variable "external_dns" {
+################################################################################
+# External DNS
+################################################################################
+variable "provision_external_dns" {
   description = "If external dns controller should be installed"
-  default     = true
-  type        = bool
-}
-
-variable "metrics_server" {
-  description = "If metrics-server should be installed"
   default     = true
   type        = bool
 }
@@ -96,166 +165,15 @@ variable "external_dns_type" {
   default     = ""
 }
 
-variable "allow_ssh" {
-  description = "If SSH should be allowed into the worker nodes security group"
-  default     = true
-  type        = bool
+variable "external_dns_policy" {
+  description = "The --policy type to pass to external-dns. By default upsert-only would prevent ExternalDNS from deleting any records."
+  default     = "upsert-only"
 }
 
-variable "allow_ssh_cidr" {
-  description = "If allow_ssh is enabled which ips can access port 22"
-  default     = "10.0.0.0/8"
-}
-
-variable "nodes_key_name" {
-  description = "SSH Key to use for nodes"
-}
-
-
-variable "nodes_additional_security_group_ids" {
-  description = "additional security groups ids to attach to nodes"
-  type        = list(string)
-  default     = []
-}
-
-variable "nodes_ami_id" {
-  description = "The AMI ID to use. If empty looks up from AWS EKS provided one"
-  default     = ""
-}
-
-variable "map_accounts" {
-  description = "Additional AWS account numbers to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
-  type        = list(string)
-  default     = []
-}
-
-variable "map_roles" {
-  description = "Additional IAM roles to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
-  type = list(object({
-    rolearn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
-}
-
-variable "map_users" {
-  description = "Additional IAM users to add to the aws-auth configmap. See examples/basic/variables.tf for example format."
-  type = list(object({
-    userarn  = string
-    username = string
-    groups   = list(string)
-  }))
-  default = []
-}
-
-variable "ebs_default_encrypted" {
-  description = "If we should enable EBS encryption by default for k8s created volumes"
-  default     = true
-  type        = bool
-}
-
-variable "aws_load_balancer_controller_image" {
-  description = "Image for installing ingress controller"
-  default     = "amazon/aws-alb-ingress-controller:v2.2.0"
-}
-
-variable "sealed_secrets_controller" {
-  description = "Whether or not to install the sealed secrests controller"
-  default     = true
-  type        = bool
-}
-
-variable "node_groups" {
-  type        = list(any)
-  description = "The node groups to create. See `node_group_defaults` for possible options"
-}
-
-variable "node_group_defaults" {
-  type = object({
-    name                                     = string
-    lifecycle                                = string
-    min_count                                = number
-    count                                    = number
-    max_count                                = number
-    instance_type                            = string
-    dedicated                                = bool
-    autoscale                                = bool
-    gpu                                      = bool
-    external_lb                              = bool
-    subnets                                  = list(string)
-    override_instance_types                  = list(string)
-    spot_instance_pools                      = number
-    on_demand_base_capacity                  = number
-    on_demand_percentage_above_base_capacity = number
-  })
-  default = {
-    name                                     = null        # Name of the node group
-    lifecycle                                = "ondemand"  # Lifecycle of node (ondemand or spot)
-    min_count                                = 1           # Min count for ASG
-    count                                    = 2           # Initial desired count for ASG
-    max_count                                = 2           # Max count for ASG
-    instance_type                            = "m5.xlarge" # Instance type
-    dedicated                                = false       # If true taint will be applied to group to make it a dedicated node group.
-    autoscale                                = true        # If cluster autoscaling should control desired count
-    gpu                                      = false       # If GPU instance types should be used
-    external_lb                              = true        # If ALB External LB should use these nodes for attaching to target group
-    subnets                                  = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
-    override_instance_types                  = null        # A list of override instance types for mixed ondemand/spot instances policy
-    spot_instance_pools                      = 10          # Number of Spot pools per availability zone to allocate capacity. EC2 Auto Scaling selects the cheapest Spot pools and evenly allocates Spot capacity across the number of Spot pools that you specify.
-    on_demand_base_capacity                  = 0           # Absolute minimum amount of desired capacity that must be fulfilled by on-demand instances
-    on_demand_percentage_above_base_capacity = 0           # Percentage split between on-demand and Spot instances above the base on-demand capacity
-  }
-}
-
-variable managed_node_groups {
-  type        = list(any)
-  description = "The Managed Node groups to create. See `node_group_defaults` for possible options"
-  default     = []
-}
-
-variable "managed_node_group_defaults" {
-  type = object({
-    name              = string
-    min_count         = number
-    count             = number
-    max_count         = number
-    instance_type     = string
-    dedicated         = bool
-    autoscale         = bool
-    external_lb       = bool
-    subnets           = list(string)
-    disk_size         = number
-    additional_labels = map(string)
-  })
-  default = {
-    name              = null        # Name of the node group
-    min_count         = 1           # Min count for ASG
-    count             = 2           # Initial desired count for ASG
-    max_count         = 2           # Max count for ASG
-    instance_type     = "m5.xlarge" # Instance type
-    dedicated         = false       # If true taint will be applied to group to make it a dedicated node group.
-    autoscale         = true        # If cluster autoscaling should control desired count
-    external_lb       = true        # If ALB External LB should use these nodes for attaching to target group
-    subnets           = null        # If set, a specific set of subnets to use for this ASG. Helpful when creating one ASG/Node Group per AZ. Defaults to var.subnets
-    disk_size         = 100         # Defaults to 100gb, same as worker node groups
-    additional_labels = {}          # Any additional labels to add
-  }
-}
-
-
-variable "pre_userdata" {
-  description = "Userdata to pre-append to the default userdata."
-  default     = ""
-}
-
-variable "enable_irsa" {
-  description = "Whether to create OpenID Connect Provider for EKS to enable IRSA"
-  type        = bool
-  default     = false
-}
-
-variable "flux" {
+################################################################################
+# Flux
+################################################################################
+variable "provision_flux" {
   type        = bool
   default     = false
   description = "If Flux should be deployed"
@@ -289,4 +207,22 @@ variable "flux_manifest_generation" {
   type        = bool
   default     = false
   description = "If flue manifest-generation should be true or false (for kustomize support)"
+}
+
+################################################################################
+# Metrics Server
+################################################################################
+variable "provision_metrics_server" {
+  description = "If metrics-server should be installed"
+  default     = true
+  type        = bool
+}
+
+################################################################################
+# Metrics Server
+################################################################################
+variable "provision_sealed_secrets_controller" {
+  description = "Whether or not to install the sealed secrests controller"
+  default     = true
+  type        = bool
 }
