@@ -52,7 +52,7 @@ See VPC section for how to create the subnet.
 - Setup OIDC auth by default and use for all provisioned applications
 ## Example Usage
 
-See [example.tf](example/example.tf) for a full example
+See [example creation](example/main.tf) for a full example
 
 ### Dashboard
 
