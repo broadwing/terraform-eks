@@ -51,6 +51,15 @@ locals {
   )
 
   ################################################################################
+  # Additional node group security groups
+  ################################################################################
+
+  node_security_group_additional_rules = merge(
+    local.alb_ingress_node_security_group_rule,
+    var.node_security_group_additional_rules
+  )
+
+  ################################################################################
   # Prefixed Names
   ################################################################################
 

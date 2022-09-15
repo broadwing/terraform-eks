@@ -1,3 +1,16 @@
+locals {
+  alb_ingress_node_security_group_rule = var.provision_dashboard ? {
+    alb_ingress_webhook = {
+      description                   = "Control plane to alb controller webhook"
+      protocol                      = "tcp"
+      from_port                     = 9443
+      to_port                       = 9443
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  } : {}
+}
+
 data "kubectl_path_documents" "dashboard_resources" {
   count = var.provision_dashboard ? 1 : 0
 
@@ -62,8 +75,12 @@ data "kubernetes_secret" "dashboard_token" {
 
   metadata {
     name      = kubectl_manifest.admin_service_account_resources[2].name
-    namespace = "kube-system"
+    namespace = "kubernetes-dashboard"
   }
 
   depends_on = [kubectl_manifest.admin_service_account_resources, kubernetes_namespace.dashboard]
+}
+
+output "dashboard_token" {
+  value = var.get_dashboard_token ? try(base64decode(data.kubernetes_secret.dashboard_token[0].data["token"]), "") : ""
 }

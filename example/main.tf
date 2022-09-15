@@ -7,7 +7,7 @@
 ################################################################################
 locals {
   cluster_name    = "broadwing-eks"
-  cluster_version = "1.22"
+  cluster_version = "1.23"
 
   self_managed_node_group_defaults = {
     instance_type          = "t3.medium"
@@ -88,6 +88,8 @@ module "eks" {
 
   control_plane_subnet_ids = module.vpc.private_subnets
   subnet_ids               = aws_subnet.node_subnets[*].id
+
+  node_security_group_additional_rules = module.broadwing_eks_enrichment.enriched_node_security_group_additional_rules
 
   # Self Managed Node Group(s)
   self_managed_node_group_defaults = module.broadwing_eks_enrichment.enriched_self_managed_node_group_defaults
