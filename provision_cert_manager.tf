@@ -13,7 +13,7 @@ resource "kubernetes_namespace" "cert_manager" {
     name = "cert-manager"
   }
 
-  depends_on = [var.eks_module_cluster_id]
+  depends_on = [var.eks_module_cluster_arn]
 }
 
 resource "kubectl_manifest" "cert_manager_resources" {

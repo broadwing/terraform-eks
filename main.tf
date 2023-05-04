@@ -11,10 +11,13 @@ locals {
       post_bootstrap_user_data = var.enable_ssm_agent ? join("\n", [try(var.self_managed_node_group_defaults.post_bootstrap_user_data, ""), var.enable_ssm_agent_startup_script]) : null
 
       # Additional roles policies
-      iam_role_additional_policies = [
-        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      ]
+      iam_role_additional_policies = {
+        "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+        "eks_workers_albs"             = aws_iam_policy.eks_workers_albs.arn,
+        "eks_workers_route53"          = aws_iam_policy.eks_workers_route53.arn,
+        "worker_autoscaling"           = aws_iam_policy.worker_autoscaling.arn,
+      }
 
       autoscaling_group_tags = merge(
         try(var.self_managed_node_group_defaults.autoscaling_group_tags, {}),
@@ -34,10 +37,13 @@ locals {
       # SSM Already installed on EKS managed nodes
 
       # Additional roles policies
-      iam_role_additional_policies = [
-        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      ]
+      iam_role_additional_policies = {
+        "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+        "eks_workers_albs"             = aws_iam_policy.eks_workers_albs.arn,
+        "eks_workers_route53"          = aws_iam_policy.eks_workers_route53.arn,
+        "worker_autoscaling"           = aws_iam_policy.worker_autoscaling.arn,
+      }
 
       launch_template_tags = merge(
         try(var.self_managed_node_group_defaults.launch_template_tags, {}),
@@ -53,11 +59,9 @@ locals {
   ################################################################################
   # Additional node group security groups
   ################################################################################
-
-  node_security_group_additional_rules = merge(
-    local.alb_ingress_node_security_group_rule,
-    var.node_security_group_additional_rules
-  )
+  # There are now no additional rules this module needs to add but will keep this
+  # in case we need to add any in the future
+  node_security_group_additional_rules = var.node_security_group_additional_rules
 
   ################################################################################
   # Prefixed Names

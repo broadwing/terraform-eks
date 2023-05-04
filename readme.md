@@ -35,7 +35,7 @@ For example a `t3.medium` can run `110` pods (memory/cpu permitting) instead of 
 The previous generation of this module used calico and cni-genie to increase pod density.
 
 
-However this means that your EKS cluster will require a lot more IPs from your VPC than before and also means that there needs to be whole `/28` blocks available within your subnet. AWS likes to use random IPs throught the subnet block so finding free `/28` ranges can be difficult.
+However this means that your EKS cluster will require a lot more IPs from your VPC than before and also means that there needs to be whole `/28` blocks available within your subnet. AWS likes to use random IPs throughout the subnet block so finding free `/28` ranges can be difficult.
 
 For this reason its recommended to create dedicated node subnets (or CIDR Reservations) with large ranges such as:
 
@@ -156,11 +156,11 @@ resource "aws_route_table_association" "node_subnets" {
 
 #### Providers and Access
 
-Since both our module and the eks module create resources in k8s directly we need to setup thier providers
+Since both our module and the eks module create resources in k8s directly we need to setup their providers
 
 ```hcl
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
+  name = module.eks.cluster_name
 }
 
 data "aws_caller_identity" "current" {}
@@ -241,9 +241,9 @@ Pass the data to the enrichment module to setup vars and provision resources
 module "broadwing_eks_enrichment" {
   source = "../terraform-eks"
 
-  cluster_name          = local.cluster_name
-  eks_module            = module.eks
-  eks_module_cluster_id = module.eks.cluster_id
+  cluster_name           = local.cluster_name
+  eks_module             = module.eks
+  eks_module_cluster_arn = module.eks.cluster_arn
 
   self_managed_node_group_defaults = local.self_managed_node_group_defaults
   self_managed_node_groups         = local.self_managed_node_groups
@@ -260,10 +260,12 @@ Finally call the community EKS module with outputs from the enrichment module
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 18.0"
+  version = "~> 19.13"
 
   cluster_name    = local.cluster_name
   cluster_version = local.cluster_version
+
+  cluster_endpoint_public_access = true
 
   vpc_id = module.vpc.vpc_id
 

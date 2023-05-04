@@ -1,16 +1,3 @@
-locals {
-  alb_ingress_node_security_group_rule = var.provision_dashboard ? {
-    alb_ingress_webhook = {
-      description                   = "Control plane to alb controller webhook"
-      protocol                      = "tcp"
-      from_port                     = 9443
-      to_port                       = 9443
-      type                          = "ingress"
-      source_cluster_security_group = true
-    }
-  } : {}
-}
-
 data "kubectl_path_documents" "dashboard_resources" {
   count = var.provision_dashboard ? 1 : 0
 
@@ -34,7 +21,7 @@ resource "kubernetes_namespace" "dashboard" {
     name = "kubernetes-dashboard"
   }
 
-  depends_on = [var.eks_module_cluster_id]
+  depends_on = [var.eks_module_cluster_arn]
 }
 
 resource "kubectl_manifest" "dashboard_resources" {
@@ -46,7 +33,7 @@ resource "kubectl_manifest" "dashboard_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [var.eks_module_cluster_id, kubernetes_namespace.dashboard]
+  depends_on = [var.eks_module_cluster_arn, kubernetes_namespace.dashboard]
 
   lifecycle {
     ignore_changes = [
@@ -66,7 +53,7 @@ resource "kubectl_manifest" "admin_service_account_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [var.eks_module_cluster_id, kubernetes_namespace.dashboard]
+  depends_on = [var.eks_module_cluster_arn, kubernetes_namespace.dashboard]
 }
 
 

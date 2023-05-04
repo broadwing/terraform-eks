@@ -8,8 +8,8 @@ variable "eks_module" {
   type        = any
 }
 
-variable "eks_module_cluster_id" {
-  description = "Output of the eks module's cluster_id for enforcing dependency order. eg eks_module_cluster_id = module.eks.cluster_id"
+variable "eks_module_cluster_arn" {
+  description = "Output of the eks module's cluster_arn for enforcing dependency order. eg eks_module_cluster_arn = module.eks.cluster_arn"
   type        = string
 }
 
