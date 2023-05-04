@@ -17,3 +17,7 @@ output "enriched_eks_managed_node_groups" {
 output "enriched_node_security_group_additional_rules" {
   value = local.node_security_group_additional_rules
 }
+
+output "enriched_cluster_addons" {
+  value = local.enriched_cluster_addons
+}

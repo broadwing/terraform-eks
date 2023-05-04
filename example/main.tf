@@ -86,6 +86,8 @@ module "eks" {
 
   cluster_endpoint_public_access = true
 
+  cluster_addons = module.broadwing_eks_enrichment.enriched_cluster_addons
+
   vpc_id = module.vpc.vpc_id
 
   control_plane_subnet_ids = module.vpc.private_subnets

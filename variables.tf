@@ -22,12 +22,6 @@ variable "prefix_names_with_cluster" {
   default     = true
 }
 
-variable "use_vpc_cni_prefix_delegation" {
-  description = "Sets ENABLE_PREFIX_DELEGATION, WARM_IP_TARGET, and MINIMUM_IP_TARGET on the vpc-cni to enable more pods and ips per node"
-  type        = bool
-  default     = true
-}
-
 variable "default_autoscale" {
   description = "If appropriate autoscaling tags should be added to resources. Can be overriden by `autoscale` value in each nodegroup"
   type        = bool
@@ -55,6 +49,40 @@ variable "node_security_group_additional_rules" {
   description = "List of additional security group rules to add to the node security group created. Set `source_cluster_security_group = true` inside rules to set the `cluster_security_group` as source"
   type        = any
   default     = {}
+}
+
+################################################################################
+# EKS Addons
+################################################################################
+
+variable "cluster_addons" {
+  description = "Map of cluster addon configurations to enable for the cluster. This module will merge in some default addons"
+  type        = any
+  default     = {}
+}
+
+variable "kube_proxy_addon" {
+  description = "If the kube-proxy addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "coredns_addon" {
+  description = "If the coredns addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_cni_addon" {
+  description = "If the vpc-cni addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "use_vpc_cni_prefix_delegation" {
+  description = "Sets ENABLE_PREFIX_DELEGATION, WARM_IP_TARGET, and MINIMUM_IP_TARGET on the vpc-cni to enable more pods and ips per node"
+  type        = bool
+  default     = true
 }
 
 ################################################################################

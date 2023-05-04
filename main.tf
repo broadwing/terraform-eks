@@ -21,11 +21,6 @@ locals {
 
       autoscaling_group_tags = merge(
         try(var.self_managed_node_group_defaults.autoscaling_group_tags, {}),
-
-        # Forces waiting for aws_node to be patched before lettings nodes start
-        var.use_vpc_cni_prefix_delegation ? {
-          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
-        } : {},
       )
     },
   )
@@ -47,11 +42,6 @@ locals {
 
       launch_template_tags = merge(
         try(var.self_managed_node_group_defaults.launch_template_tags, {}),
-
-        # Forces waiting for aws_node to be patched before lettings nodes start
-        var.use_vpc_cni_prefix_delegation ? {
-          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
-        } : {}
       )
     },
   )
@@ -132,7 +122,7 @@ locals {
 
         ${try(node.dedicated, local.enriched_self_managed_node_group_defaults.dedicated, false) ? " --register-with-taints=dedicated=${local.enriched_self_managed_node_group_prefixed_names[key]}:NoSchedule" : ""}
 
-        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.11.4 --cni-prefix-delegation-enabled)" : ""}
         "
         EOT
       , "\n", "")
@@ -185,7 +175,7 @@ locals {
         --node-labels=${try(node.exclude_from_external_load_balancers, local.enriched_eks_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "node.kubernetes.io/exclude-from-external-load-balancers=true," : ""}
         instanceId=$(ec2-metadata -i | cut -d ' ' -f2)
 
-        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.11.4 --cni-prefix-delegation-enabled)" : ""}
         EOS
     , "\n", "")}"
         EOF
