@@ -7,9 +7,6 @@ locals {
     # Merge original data
     var.self_managed_node_group_defaults,
     {
-      # Merge in post_bootstrap_user_data to install and enable ssm agent
-      post_bootstrap_user_data = var.enable_ssm_agent ? join("\n", [try(var.self_managed_node_group_defaults.post_bootstrap_user_data, ""), var.enable_ssm_agent_startup_script]) : null
-
       # Additional roles policies
       iam_role_additional_policies = {
         "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
@@ -29,8 +26,6 @@ locals {
     # Merge original data
     var.eks_managed_node_group_defaults,
     {
-      # SSM Already installed on EKS managed nodes
-
       # Additional roles policies
       iam_role_additional_policies = {
         "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",

@@ -28,23 +28,6 @@ variable "default_autoscale" {
   default     = true
 }
 
-variable "enable_ssm_agent" {
-  description = "If the SSM agent should be installed, enabled, and IAM policy attached to all nodes"
-  type        = bool
-  default     = true
-}
-
-variable "enable_ssm_agent_startup_script" {
-  description = "The startup script to append to post_bootstrap_user_data to enable ssm"
-  type        = string
-  default     = <<-EOT
-  cd /tmp
-  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-  sudo systemctl enable amazon-ssm-agent
-  sudo systemctl start amazon-ssm-agent
-  EOT
-}
-
 variable "node_security_group_additional_rules" {
   description = "List of additional security group rules to add to the node security group created. Set `source_cluster_security_group = true` inside rules to set the `cluster_security_group` as source"
   type        = any
