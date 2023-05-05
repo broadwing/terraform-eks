@@ -37,7 +37,10 @@ locals {
 
   eks_managed_node_groups = {
     eks-mngd = {
-      max_size                             = 2
+      max_size                             = 1
+    }
+    eks-mngd-dedicated = {
+      max_size                             = 1
       dedicated                            = true
       exclude_from_external_load_balancers = true
       iam_role_use_name_prefix             = false
@@ -58,7 +61,7 @@ locals {
 ################################################################################
 
 module "broadwing_eks_enrichment" {
-  source = "github.com/broadwing/terraform-eks.git?ref=v2.0.0"
+  source = "github.com/broadwing/terraform-eks.git?ref=v3.0.0"
 
   cluster_name           = local.cluster_name
   eks_module             = module.eks
