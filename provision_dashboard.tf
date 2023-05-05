@@ -62,12 +62,13 @@ data "kubernetes_secret" "dashboard_token" {
 
   metadata {
     name      = kubectl_manifest.admin_service_account_resources[2].name
-    namespace = "kubernetes-dashboard"
+    namespace = "kube-system"
   }
 
   depends_on = [kubectl_manifest.admin_service_account_resources, kubernetes_namespace.dashboard]
 }
 
 output "dashboard_token" {
-  value = var.get_dashboard_token ? try(base64decode(data.kubernetes_secret.dashboard_token[0].data["token"]), "") : ""
+  value     = var.get_dashboard_token ? try(base64decode(data.kubernetes_secret.dashboard_token[0].data["token"]), "") : ""
+  sensitive = true
 }
