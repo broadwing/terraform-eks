@@ -1,7 +1,7 @@
 data "kubectl_path_documents" "ebs_resources" {
   count = var.provision_ebs_storage ? 1 : 0
 
-  pattern = "${path.module}/cluster_configs/ebs-storage-class.tpl.tpl.yaml"
+  pattern = "${path.module}/cluster_configs/ebs-storage-class.tpl.yaml"
   vars = {
     encrypted = var.ebs_default_encrypted
   }
