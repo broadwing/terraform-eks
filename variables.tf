@@ -8,8 +8,8 @@ variable "eks_module" {
   type        = any
 }
 
-variable "eks_module_cluster_id" {
-  description = "Output of the eks module's cluster_id for enforcing dependency order. eg eks_module_cluster_id = module.eks.cluster_id"
+variable "eks_module_cluster_arn" {
+  description = "Output of the eks module's cluster_arn for enforcing dependency order. eg eks_module_cluster_arn = module.eks.cluster_arn"
   type        = string
 }
 
@@ -22,39 +22,50 @@ variable "prefix_names_with_cluster" {
   default     = true
 }
 
-variable "use_vpc_cni_prefix_delegation" {
-  description = "Sets ENABLE_PREFIX_DELEGATION, WARM_IP_TARGET, and MINIMUM_IP_TARGET on the vpc-cni to enable more pods and ips per node"
-  type        = bool
-  default     = true
-}
-
 variable "default_autoscale" {
   description = "If appropriate autoscaling tags should be added to resources. Can be overriden by `autoscale` value in each nodegroup"
   type        = bool
   default     = true
 }
 
-variable "enable_ssm_agent" {
-  description = "If the SSM agent should be installed, enabled, and IAM policy attached to all nodes"
-  type        = bool
-  default     = true
-}
-
-variable "enable_ssm_agent_startup_script" {
-  description = "The startup script to append to post_bootstrap_user_data to enable ssm"
-  type        = string
-  default     = <<-EOT
-  cd /tmp
-  sudo yum install -y https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/linux_amd64/amazon-ssm-agent.rpm
-  sudo systemctl enable amazon-ssm-agent
-  sudo systemctl start amazon-ssm-agent
-  EOT
-}
-
 variable "node_security_group_additional_rules" {
   description = "List of additional security group rules to add to the node security group created. Set `source_cluster_security_group = true` inside rules to set the `cluster_security_group` as source"
   type        = any
   default     = {}
+}
+
+################################################################################
+# EKS Addons
+################################################################################
+
+variable "cluster_addons" {
+  description = "Map of cluster addon configurations to enable for the cluster. This module will merge in some default addons"
+  type        = any
+  default     = {}
+}
+
+variable "kube_proxy_addon" {
+  description = "If the kube-proxy addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "coredns_addon" {
+  description = "If the coredns addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "vpc_cni_addon" {
+  description = "If the vpc-cni addon should be enabled"
+  type        = bool
+  default     = true
+}
+
+variable "use_vpc_cni_prefix_delegation" {
+  description = "Sets ENABLE_PREFIX_DELEGATION, WARM_IP_TARGET, and MINIMUM_IP_TARGET on the vpc-cni to enable more pods and ips per node"
+  type        = bool
+  default     = true
 }
 
 ################################################################################
@@ -100,7 +111,7 @@ variable "provision_aws_load_balancer_controller" {
 
 variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "amazon/aws-alb-ingress-controller:v2.4.2"
+  default     = "public.ecr.aws/eks/aws-load-balancer-controller:v2.4.7"
 }
 
 ################################################################################

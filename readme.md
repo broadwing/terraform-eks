@@ -5,11 +5,12 @@ Broadwing EKS-Cluster module will help with the creation of an EKS cluster using
 Preforms the following:
 - Sets up vpc-cni to use prefix delegation to allow more pods and ips per node
 - Makes it simpler to created dedicated node groups
-- Sets up SSM agent with appopriate IAM roles
+- Sets up SSM agent with appropriate IAM roles
 - Creates IAM policies for external dns, alb ingress controller, and autoscaling functionality and attaches to created nodes
 - Can prefix node names with the cluster name
 - Sets appropriate tags for autoscaler and alb controller functionality
-- Sets additional lables on nodes
+- Sets additional labels on nodes
+- Sets addons to pass to module
 
 It also provisions the following on the cluster once its up
 - ALB ingress controller
@@ -24,7 +25,7 @@ It also provisions the following on the cluster once its up
 
 The module is built in a way that it simply encriches some of the variables that you would pass into the Community EKS module. This allows you to make any additions or changes that module supports. The decoupling of the modules also makes it easier to upgrade the community module without changing this module.
 
-Previos version of this module wrapped the community module but made it too difficult to keep up with all the changes the community module would make.
+Previous version of this module wrapped the community module but made it too difficult to keep up with all the changes the community module would make.
 
 ## VPC-CNI Prefix Delegation
 
@@ -35,7 +36,7 @@ For example a `t3.medium` can run `110` pods (memory/cpu permitting) instead of 
 The previous generation of this module used calico and cni-genie to increase pod density.
 
 
-However this means that your EKS cluster will require a lot more IPs from your VPC than before and also means that there needs to be whole `/28` blocks available within your subnet. AWS likes to use random IPs throught the subnet block so finding free `/28` ranges can be difficult.
+However this means that your EKS cluster will require a lot more IPs from your VPC than before and also means that there needs to be whole `/28` blocks available within your subnet. AWS likes to use random IPs throughout the subnet block so finding free `/28` ranges can be difficult.
 
 For this reason its recommended to create dedicated node subnets (or CIDR Reservations) with large ranges such as:
 
@@ -109,7 +110,7 @@ terraform {
 ```
 #### VPC
 
-Create a VPC. If using vpc-cni prefix delgation its recommended to have a big subnet dedicated to nodes, or to use cidr reservations, to allow for more room for /23 ranges within the subnet
+Create a VPC. If using vpc-cni prefix delegation its recommended to have a big subnet dedicated to nodes, or to use cidr reservations, to allow for more room for /23 ranges within the subnet
 
 ```hcl
 locals {
@@ -156,11 +157,11 @@ resource "aws_route_table_association" "node_subnets" {
 
 #### Providers and Access
 
-Since both our module and the eks module create resources in k8s directly we need to setup thier providers
+Since both our module and the eks module create resources in k8s directly we need to setup their providers
 
 ```hcl
 data "aws_eks_cluster_auth" "cluster" {
-  name = module.eks.cluster_id
+  name = module.eks.cluster_name
 }
 
 data "aws_caller_identity" "current" {}
@@ -187,7 +188,7 @@ We'll set the majority of the data in local vars so we can pass to both modules
 
 locals {
   cluster_name    = "broadwing-eks"
-  cluster_version = "1.23"
+  cluster_version = "1.25"
 
   self_managed_node_group_defaults = {
     instance_type          = "t3.medium"
@@ -241,9 +242,9 @@ Pass the data to the enrichment module to setup vars and provision resources
 module "broadwing_eks_enrichment" {
   source = "../terraform-eks"
 
-  cluster_name          = local.cluster_name
-  eks_module            = module.eks
-  eks_module_cluster_id = module.eks.cluster_id
+  cluster_name           = local.cluster_name
+  eks_module             = module.eks
+  eks_module_cluster_arn = module.eks.cluster_arn
 
   self_managed_node_group_defaults = local.self_managed_node_group_defaults
   self_managed_node_groups         = local.self_managed_node_groups
@@ -260,10 +261,14 @@ Finally call the community EKS module with outputs from the enrichment module
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 18.0"
+  version = "~> 19.13"
 
   cluster_name    = local.cluster_name
   cluster_version = local.cluster_version
+
+  cluster_endpoint_public_access = true
+
+  cluster_addons = module.broadwing_eks_enrichment.enriched_cluster_addons
 
   vpc_id = module.vpc.vpc_id
 

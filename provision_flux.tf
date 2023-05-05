@@ -20,7 +20,7 @@ resource "kubectl_manifest" "flux_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [var.eks_module_cluster_id, kubernetes_secret.flux_deploy_key, kubernetes_namespace.flux]
+  depends_on = [var.eks_module_cluster_arn, kubernetes_secret.flux_deploy_key, kubernetes_namespace.flux]
 }
 
 resource "kubernetes_namespace" "flux" {
@@ -30,7 +30,7 @@ resource "kubernetes_namespace" "flux" {
     name = "flux"
   }
 
-  depends_on = [var.eks_module_cluster_id]
+  depends_on = [var.eks_module_cluster_arn]
 }
 
 resource "tls_private_key" "flux_deploy_key" {
@@ -50,5 +50,5 @@ resource "kubernetes_secret" "flux_deploy_key" {
     identity = tls_private_key.flux_deploy_key[0].private_key_pem
   }
 
-  depends_on = [var.eks_module_cluster_id, kubernetes_namespace.flux]
+  depends_on = [var.eks_module_cluster_arn, kubernetes_namespace.flux]
 }

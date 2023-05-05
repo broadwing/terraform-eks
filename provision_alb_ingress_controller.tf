@@ -17,7 +17,7 @@ resource "kubectl_manifest" "aws_load_balancer_controller_resources" {
 
   # Forces waiting for cluster to be available
   depends_on = [
-    var.eks_module_cluster_id,
+    var.eks_module_cluster_arn,
     kubectl_manifest.cert_manager_resources
   ]
 }

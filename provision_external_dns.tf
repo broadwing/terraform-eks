@@ -27,5 +27,5 @@ resource "kubectl_manifest" "external_dns_resources" {
   wait_for_rollout = false
 
   # Forces waiting for cluster to be available
-  depends_on = [var.eks_module_cluster_id]
+  depends_on = [var.eks_module_cluster_arn]
 }

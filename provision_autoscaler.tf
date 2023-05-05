@@ -16,6 +16,6 @@ resource "kubectl_manifest" "cluster_autoscaler_resources" {
 
   # Forces waiting for cluster to be available
   depends_on = [
-    var.eks_module_cluster_id
+    var.eks_module_cluster_arn
   ]
 }

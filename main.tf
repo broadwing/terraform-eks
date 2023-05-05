@@ -7,22 +7,17 @@ locals {
     # Merge original data
     var.self_managed_node_group_defaults,
     {
-      # Merge in post_bootstrap_user_data to install and enable ssm agent
-      post_bootstrap_user_data = var.enable_ssm_agent ? join("\n", [try(var.self_managed_node_group_defaults.post_bootstrap_user_data, ""), var.enable_ssm_agent_startup_script]) : null
-
       # Additional roles policies
-      iam_role_additional_policies = [
-        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      ]
+      iam_role_additional_policies = {
+        "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+        "eks_workers_albs"             = aws_iam_policy.eks_workers_albs.arn,
+        "eks_workers_route53"          = aws_iam_policy.eks_workers_route53.arn,
+        "worker_autoscaling"           = aws_iam_policy.worker_autoscaling.arn,
+      }
 
       autoscaling_group_tags = merge(
         try(var.self_managed_node_group_defaults.autoscaling_group_tags, {}),
-
-        # Forces waiting for aws_node to be patched before lettings nodes start
-        var.use_vpc_cni_prefix_delegation ? {
-          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
-        } : {},
       )
     },
   )
@@ -31,21 +26,17 @@ locals {
     # Merge original data
     var.eks_managed_node_group_defaults,
     {
-      # SSM Already installed on EKS managed nodes
-
       # Additional roles policies
-      iam_role_additional_policies = [
-        "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
-        "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      ]
+      iam_role_additional_policies = {
+        "AmazonEC2RoleforSSM"          = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+        "AmazonSSMManagedInstanceCore" = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+        "eks_workers_albs"             = aws_iam_policy.eks_workers_albs.arn,
+        "eks_workers_route53"          = aws_iam_policy.eks_workers_route53.arn,
+        "worker_autoscaling"           = aws_iam_policy.worker_autoscaling.arn,
+      }
 
       launch_template_tags = merge(
         try(var.self_managed_node_group_defaults.launch_template_tags, {}),
-
-        # Forces waiting for aws_node to be patched before lettings nodes start
-        var.use_vpc_cni_prefix_delegation ? {
-          "aws-vpc-cni" : kubectl_manifest.aws_node_patch[0].uid
-        } : {}
       )
     },
   )
@@ -53,11 +44,9 @@ locals {
   ################################################################################
   # Additional node group security groups
   ################################################################################
-
-  node_security_group_additional_rules = merge(
-    local.alb_ingress_node_security_group_rule,
-    var.node_security_group_additional_rules
-  )
+  # There are now no additional rules this module needs to add but will keep this
+  # in case we need to add any in the future
+  node_security_group_additional_rules = var.node_security_group_additional_rules
 
   ################################################################################
   # Prefixed Names
@@ -128,7 +117,7 @@ locals {
 
         ${try(node.dedicated, local.enriched_self_managed_node_group_defaults.dedicated, false) ? " --register-with-taints=dedicated=${local.enriched_self_managed_node_group_prefixed_names[key]}:NoSchedule" : ""}
 
-        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.11.4 --cni-prefix-delegation-enabled)" : ""}
         "
         EOT
       , "\n", "")
@@ -181,7 +170,7 @@ locals {
         --node-labels=${try(node.exclude_from_external_load_balancers, local.enriched_eks_managed_node_group_defaults.exclude_from_external_load_balancers, false) ? "node.kubernetes.io/exclude-from-external-load-balancers=true," : ""}
         instanceId=$(ec2-metadata -i | cut -d ' ' -f2)
 
-        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.10.0 --cni-prefix-delegation-enabled)" : ""}
+        ${var.use_vpc_cni_prefix_delegation ? " --max-pods=$(/etc/eks/max-pods-calculator.sh --instance-type-from-imds --cni-version 1.11.4 --cni-prefix-delegation-enabled)" : ""}
         EOS
     , "\n", "")}"
         EOF
