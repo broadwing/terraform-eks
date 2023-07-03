@@ -4,7 +4,7 @@ Broadwing EKS-Cluster module will help with the creation of an EKS cluster using
 
 Preforms the following:
 - Sets up vpc-cni to use prefix delegation to allow more pods and ips per node
-- Makes it simpler to created dedicated node groups
+- Makes it simpler to create dedicated node groups (node groups with `NoSchedule` taints)
 - Sets up SSM agent with appropriate IAM roles
 - Creates IAM policies for external dns, alb ingress controller, and autoscaling functionality and attaches to created nodes
 - Can prefix node names with the cluster name
@@ -78,9 +78,9 @@ You can then setup pods to run on just that group with
 spec:
   tolerations:
     - key: "dedicated"
-      value: broadwing-eks-dedicated
+      value: <node-group-name>
   nodeSelector:
-    group-name: broadwing-eks-dedicated
+    group-name: <node-group-name>
 ```
 
 ### Parts
@@ -261,7 +261,7 @@ Finally call the community EKS module with outputs from the enrichment module
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.13"
+  version = "~> 19.15"
 
   cluster_name    = local.cluster_name
   cluster_version = local.cluster_version
