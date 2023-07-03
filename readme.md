@@ -197,7 +197,7 @@ locals {
   }
 
   eks_managed_node_group_defaults = {
-    instance_type          = "t3.medium"
+    instance_types         = ["t3.medium"]
     key_name               = "eks"
     vpc_security_group_ids = [module.vpc.default_security_group_id]
   }
