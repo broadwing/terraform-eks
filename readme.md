@@ -23,7 +23,7 @@ It also provisions the following on the cluster once its up
 - Metrics Server
 - Sealed Secrets
 
-The module is built in a way that it simply encriches some of the variables that you would pass into the Community EKS module. This allows you to make any additions or changes that module supports. The decoupling of the modules also makes it easier to upgrade the community module without changing this module.
+The module is built in a way that it simply enriches some of the variables that you would pass into the Community EKS module. This allows you to make any additions or changes that module supports. The decoupling of the modules also makes it easier to upgrade the community module without changing this module.
 
 Previous version of this module wrapped the community module but made it too difficult to keep up with all the changes the community module would make.
 
