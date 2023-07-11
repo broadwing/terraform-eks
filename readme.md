@@ -188,7 +188,7 @@ We'll set the majority of the data in local vars so we can pass to both modules
 
 locals {
   cluster_name    = "broadwing-eks"
-  cluster_version = "1.25"
+  cluster_version = "1.27"
 
   self_managed_node_group_defaults = {
     instance_type          = "t3.medium"
