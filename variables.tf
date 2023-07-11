@@ -111,7 +111,7 @@ variable "provision_aws_load_balancer_controller" {
 
 variable "aws_load_balancer_controller_image" {
   description = "Image for installing ingress controller"
-  default     = "public.ecr.aws/eks/aws-load-balancer-controller:v2.4.7"
+  default     = "public.ecr.aws/eks/aws-load-balancer-controller:v2.5.3"
 }
 
 ################################################################################
