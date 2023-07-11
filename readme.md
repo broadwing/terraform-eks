@@ -83,6 +83,10 @@ spec:
     group-name: <node-group-name>
 ```
 
+### Sealed Secrets
+
+If `provision_sealed_secrets_controller` is enabled (`true` by default) then `bitnami` `sealed secrets` controller will be installed. You can then encrypt secrets that can be checked into git to follow a gitops approach. When applying these sealed secrets the sealed secrets controller will decrypt them and apply them as standard k8s secrets that pods can access. To seal a secret preform something similar to `kubeseal -o yaml <name>.secret.yaml > <name>.sealed.yaml`. You can then apply `<name>.sealed.yaml` to git and apply it to the cluster.
+
 ### Parts
 
 #### Provider Versions
