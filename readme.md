@@ -244,7 +244,7 @@ Pass the data to the enrichment module to setup vars and provision resources
 
 ```hcl
 module "broadwing_eks_enrichment" {
-  source = "../terraform-eks"
+  source = "github.com/broadwing/terraform-eks.git?ref=v3.1.0"
 
   cluster_name           = local.cluster_name
   eks_module             = module.eks
