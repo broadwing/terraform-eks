@@ -41,12 +41,24 @@ locals {
     },
   )
 
+  alb_ingress_node_security_group_rule = var.provision_sealed_secrets_controller ? {
+    sealed_secrets_controller = {
+      description                   = "Control plane to sealed secrets controller"
+      protocol                      = "tcp"
+      from_port                     = 8080
+      to_port                       = 8080
+      type                          = "ingress"
+      source_cluster_security_group = true
+    }
+  } : {}
+
   ################################################################################
   # Additional node group security groups
   ################################################################################
-  # There are now no additional rules this module needs to add but will keep this
-  # in case we need to add any in the future
-  node_security_group_additional_rules = var.node_security_group_additional_rules
+  node_security_group_additional_rules = merge(
+    local.alb_ingress_node_security_group_rule,
+    var.node_security_group_additional_rules
+  )
 
   ################################################################################
   # Prefixed Names

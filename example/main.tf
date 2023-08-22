@@ -7,7 +7,7 @@
 ################################################################################
 locals {
   cluster_name    = "broadwing-eks"
-  cluster_version = "1.25"
+  cluster_version = "1.27"
 
   self_managed_node_group_defaults = {
     instance_type          = "t3.medium"
@@ -16,7 +16,7 @@ locals {
   }
 
   eks_managed_node_group_defaults = {
-    instance_type          = "t3.medium"
+    instance_types         = ["t3.medium"]
     key_name               = "eks"
     vpc_security_group_ids = [module.vpc.default_security_group_id]
   }
@@ -82,7 +82,7 @@ module "broadwing_eks_enrichment" {
 
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.13"
+  version = "~> 19.15"
 
   cluster_name    = local.cluster_name
   cluster_version = local.cluster_version

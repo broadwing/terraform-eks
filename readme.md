@@ -4,7 +4,7 @@ Broadwing EKS-Cluster module will help with the creation of an EKS cluster using
 
 Preforms the following:
 - Sets up vpc-cni to use prefix delegation to allow more pods and ips per node
-- Makes it simpler to created dedicated node groups
+- Makes it simpler to create dedicated node groups (node groups with `NoSchedule` taints)
 - Sets up SSM agent with appropriate IAM roles
 - Creates IAM policies for external dns, alb ingress controller, and autoscaling functionality and attaches to created nodes
 - Can prefix node names with the cluster name
@@ -23,7 +23,7 @@ It also provisions the following on the cluster once its up
 - Metrics Server
 - Sealed Secrets
 
-The module is built in a way that it simply encriches some of the variables that you would pass into the Community EKS module. This allows you to make any additions or changes that module supports. The decoupling of the modules also makes it easier to upgrade the community module without changing this module.
+The module is built in a way that it simply enriches some of the variables that you would pass into the Community EKS module. This allows you to make any additions or changes that module supports. The decoupling of the modules also makes it easier to upgrade the community module without changing this module.
 
 Previous version of this module wrapped the community module but made it too difficult to keep up with all the changes the community module would make.
 
@@ -78,10 +78,14 @@ You can then setup pods to run on just that group with
 spec:
   tolerations:
     - key: "dedicated"
-      value: broadwing-eks-dedicated
+      value: <node-group-name>
   nodeSelector:
-    group-name: broadwing-eks-dedicated
+    group-name: <node-group-name>
 ```
+
+### Sealed Secrets
+
+If `provision_sealed_secrets_controller` is enabled (`true` by default) then `bitnami` `sealed secrets` controller will be installed. You can then encrypt secrets that can be checked into git to follow a gitops approach. When applying these sealed secrets the sealed secrets controller will decrypt them and apply them as standard k8s secrets that pods can access. To seal a secret preform something similar to `kubeseal -o yaml <name>.secret.yaml > <name>.sealed.yaml`. You can then apply `<name>.sealed.yaml` to git and apply it to the cluster.
 
 ### Parts
 
@@ -188,7 +192,7 @@ We'll set the majority of the data in local vars so we can pass to both modules
 
 locals {
   cluster_name    = "broadwing-eks"
-  cluster_version = "1.25"
+  cluster_version = "1.27"
 
   self_managed_node_group_defaults = {
     instance_type          = "t3.medium"
@@ -197,7 +201,7 @@ locals {
   }
 
   eks_managed_node_group_defaults = {
-    instance_type          = "t3.medium"
+    instance_types         = ["t3.medium"]
     key_name               = "eks"
     vpc_security_group_ids = [module.vpc.default_security_group_id]
   }
@@ -240,7 +244,7 @@ Pass the data to the enrichment module to setup vars and provision resources
 
 ```hcl
 module "broadwing_eks_enrichment" {
-  source = "../terraform-eks"
+  source = "github.com/broadwing/terraform-eks.git?ref=v3.1.0"
 
   cluster_name           = local.cluster_name
   eks_module             = module.eks
@@ -261,7 +265,7 @@ Finally call the community EKS module with outputs from the enrichment module
 ```hcl
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
-  version = "~> 19.13"
+  version = "~> 19.15"
 
   cluster_name    = local.cluster_name
   cluster_version = local.cluster_version
